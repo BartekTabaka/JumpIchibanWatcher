@@ -1,7 +1,11 @@
-#include <print>
+#include <App.h>
 
-int main() {
-    std::println("Hello world");
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    App logic(app);
 
-    return 0;
+    g_App = &logic;
+
+    return app.exec();
 }

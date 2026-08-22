@@ -10,6 +10,9 @@ set(ASSET_FILES
 set(SOURCES
     Source/Main.cpp
 
+    Source/App.h
+    Source/App.cpp
+
     ${ASSET_FILES}
 )
 qt_add_executable(JumpIchibanWatcher)
