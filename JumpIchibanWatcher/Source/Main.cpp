@@ -7,5 +7,7 @@ int main(int argc, char *argv[])
 
     g_App = &logic;
 
+    g_App->createProduct();
+
     return app.exec();
 }

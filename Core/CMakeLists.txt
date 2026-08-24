@@ -3,7 +3,8 @@
 #
 
 set(SOURCES
-    Source/Core/File.cpp
+    Source/Core/Product.h
+    Source/Core/Product.cpp
 )
 
 # Library definition    
