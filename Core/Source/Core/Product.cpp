@@ -1,8 +1,9 @@
 #include "Product.h"
+
 #include <QDebug>
 
-Core::Product::Product(const QString& name, float currentPrice, bool available, const QString& url, 
-				 const QStringList& imageUrls, std::optional<float> regularPrice)
+Core::Product::Product(const QString& name, int currentPrice, bool available, const QString& url, 
+				 const QStringList& imageUrls, std::optional<int> regularPrice)
 	: m_Name(name), m_CurrentPrice(currentPrice), m_Available(available), m_Url(url),
 	  m_ImageUrls(imageUrls)
 {
@@ -29,7 +30,7 @@ QString Core::Product::name() const
 	return m_Name;
 }
 
-float Core::Product::currentPrice() const
+int Core::Product::currentPrice() const
 {
 	return m_CurrentPrice;
 }
@@ -39,7 +40,7 @@ bool Core::Product::onSale() const
 	return m_OnSale;
 }
 
-float Core::Product::regularPrice() const
+int Core::Product::regularPrice() const
 {
 	return m_RegularPrice;
 }

@@ -5,6 +5,8 @@
 set(SOURCES
     Source/Core/Product.h
     Source/Core/Product.cpp
+    Source/Core/Mapper.h
+    Source/Core/Mapper.cpp
 )
 
 # Library definition    

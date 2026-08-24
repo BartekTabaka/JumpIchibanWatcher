@@ -7,22 +7,22 @@ namespace Core
 {
 	class Product {
 	public:
-		Product(const QString& name, float currentPrice, bool available, const QString& url,
-			const QStringList& imageUrls, std::optional<float> regularPrice = std::nullopt);
+		Product(const QString& name, int currentPrice, bool available, const QString& url,
+			const QStringList& imageUrls, std::optional<int> regularPrice = std::nullopt);
 
 		// Getters
 		QString name() const;
-		float currentPrice() const;
+		int currentPrice() const;
 		bool onSale() const;
-		float regularPrice() const;
+		int regularPrice() const;
 		bool available() const;
 		QString url() const;
 		QStringList imageUrls() const;
 	private:
 		QString m_Name;
-		float m_CurrentPrice;
+		int m_CurrentPrice; // in cents
 		bool m_OnSale = false;
-		float m_RegularPrice = 0.f;
+		int m_RegularPrice = 0; // in cents
 		bool m_Available;
 		QString m_Url;
 		QStringList m_ImageUrls;

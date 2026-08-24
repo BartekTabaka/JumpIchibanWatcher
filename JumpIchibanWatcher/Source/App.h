@@ -1,5 +1,6 @@
 #pragma once
 #include <QApplication>
+#include "Core/Mapper.h"
 
 // -- Forward -----------------
 class App;
