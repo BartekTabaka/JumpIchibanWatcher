@@ -1,7 +1,5 @@
 #include "App.h"
 
-#include <QDebug>
-
 App *g_App = nullptr;
 
 App::App(QApplication& app) : m_App(app)
@@ -134,5 +132,15 @@ void App::createProduct()
         "selling_plan_groups": []
     })";
 
-	Core::Product m_Product = Core::mapToProduct(fetchedContent);
+    auto result = Core::mapToProduct(fetchedContent)
+        .transform([](const auto& product)
+        {
+            qDebug() << "App recived Product";
+            return product;
+        })
+        .or_else([](const auto& error) -> std::expected<Core::Product, Core::JsonError>
+        {
+            qDebug() << error;
+            return std::unexpected(error);
+        });
 }
