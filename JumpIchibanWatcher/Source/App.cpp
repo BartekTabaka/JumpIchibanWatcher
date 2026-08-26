@@ -135,7 +135,7 @@ void App::createProduct()
     auto result = Core::mapToProduct(fetchedContent)
         .transform([](const auto& product)
         {
-            qDebug() << "App recived Product";
+            qDebug() << "App received Product";
             return product;
         })
         .or_else([](const auto& error) -> std::expected<Core::Product, Core::JsonError>
