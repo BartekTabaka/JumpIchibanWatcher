@@ -1,6 +1,8 @@
 #pragma once
 #include <QApplication>
+
 #include "Core/Mapper.h"
+#include <optional>
 
 // -- Forward -----------------
 class App;
@@ -13,6 +15,9 @@ public:
 	explicit App(QApplication& app);
 
 	void createProduct();
+	void showProductInfo();
 private:
 	QApplication& m_App;
+
+	std::optional<Core::Product> m_LastProduct;
 };

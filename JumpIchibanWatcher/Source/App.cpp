@@ -133,9 +133,11 @@ void App::createProduct()
     })";
 
     auto result = Core::mapToProduct(fetchedContent)
-        .transform([](const auto& product)
+        .transform([this](const auto& product)
         {
+            m_LastProduct = product;
             qDebug() << "App received Product";
+            qDebug() << "-----------------------";
             return product;
         })
         .or_else([](const auto& error) -> std::expected<Core::Product, Core::JsonError>
@@ -143,4 +145,21 @@ void App::createProduct()
             qDebug() << error;
             return std::unexpected(error);
         });
+}
+
+void App::showProductInfo()
+{
+    if (!m_LastProduct)
+        return;
+
+    const Core::Product& product = m_LastProduct.value();
+    qDebug() << product.name();
+    qDebug() << product.currentPrice();
+    qDebug() << product.onSale();
+    qDebug() << product.regularPrice();
+    qDebug() << product.available();
+    qDebug() << product.url();
+    for (const auto& url : product.imageUrls()) {
+        qDebug() << url;
+    }
 }
