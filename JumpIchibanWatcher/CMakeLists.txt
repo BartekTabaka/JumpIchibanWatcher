@@ -12,6 +12,9 @@ set(SOURCES
 
     Source/App.h
     Source/App.cpp
+    Source/AppIdentity.h
+    Source/Settings.h
+    Source/Settings.cpp
 
     ${ASSET_FILES}
 )

@@ -19,5 +19,6 @@ public:
 private:
 	QApplication& m_App;
 
-	std::optional<Core::Product> m_LastProduct;
+	Core::Product m_LastProduct;
+	std::optional<Core::Product> m_NewProduct;
 };

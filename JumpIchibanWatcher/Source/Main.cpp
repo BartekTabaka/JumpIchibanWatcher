@@ -1,4 +1,4 @@
-#include <App.h>
+#include "App.h"
 
 int main(int argc, char *argv[])
 {
@@ -8,7 +8,6 @@ int main(int argc, char *argv[])
     g_App = &logic;
 
     g_App->createProduct();
-
     g_App->showProductInfo();
 
     return app.exec();

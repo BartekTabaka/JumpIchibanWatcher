@@ -22,7 +22,7 @@ namespace Core
 		QString m_Name;
 		int m_CurrentPrice; // in cents
 		bool m_OnSale = false;
-		int m_RegularPrice = 0; // in cents
+		int m_RegularPrice; // in cents
 		bool m_Available;
 		QString m_Url;
 		QStringList m_ImageUrls;

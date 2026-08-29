@@ -11,6 +11,8 @@ Core::Product::Product(const QString& name, int currentPrice, bool available, co
 		m_OnSale = true;
 		m_RegularPrice = regularPrice.value();
 	}
+	else m_RegularPrice = m_CurrentPrice;
+	// If the product is not on sale, assume that the regular price is the same as the current price
 
 	// This log block is just for now, I'll shorten it in the future to:
 	// qDebug() << "Created new Product!";
@@ -21,8 +23,9 @@ Core::Product::Product(const QString& name, int currentPrice, bool available, co
 	if (regularPrice) qDebug() << "- regular price:" << m_RegularPrice;
 	qDebug() << "- available:" << m_Available;
 	qDebug() << "- url:" << m_Url;
-	for (const QString& iUrl : m_ImageUrls)
-		qDebug() << "- image:" << iUrl;
+	/*for (const QString& iUrl : m_ImageUrls)
+		qDebug() << "- image:" << iUrl;*/
+	qDebug() << "-----------------------";
 }
 
 QString Core::Product::name() const
