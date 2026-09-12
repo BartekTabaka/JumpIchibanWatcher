@@ -1,7 +1,10 @@
 #include "Settings.h"
 
 #include "AppIdentity.h"
+#include <array>
 #include <QDebug>
+#include <QMetaType>
+#include <QStringView>
 
 namespace
 {
@@ -16,28 +19,61 @@ namespace
 
     // If we add more variables for the keys, this will need to become a namespace.
     const QString kLastProductKey = "lastProduct";
+    QString FullKey(QStringView field)
+    {
+        return QString(kLastProductKey + u'/' + field.toString());
+    }
+
+    struct ProductField {
+        QStringView key;
+        QMetaType::Type expectedType;
+    };
+
+    constexpr std::array<ProductField, 7> expectedValues{ {
+        { u"name",         QMetaType::QString },
+        { u"currentPrice", QMetaType::Int },
+        { u"onSale",       QMetaType::Bool },
+        { u"regularPrice", QMetaType::Int },
+        { u"available",    QMetaType::Bool },
+        { u"url",          QMetaType::QString },
+        { u"imageUrls",    QMetaType::QStringList }
+    } };
 }
 
-Core::Product Settings::LoadLastProduct()
+std::optional<Core::Product> Settings::LoadLastProduct()
 {
     const QSettings settings = MakeSettings();
 
-    const QString name = settings.value(kLastProductKey + "/name", "unknown").toString();
-    const int currentPrice = settings.value(kLastProductKey + "/currentPrice", 0).toInt();
-    const bool available = settings.value(kLastProductKey + "/available", false).toBool();
-    const QString url = settings.value(kLastProductKey + "/url", "").toString();
-    const QStringList imageUrls = settings.value(kLastProductKey + "/imageUrls").toStringList();
+    // Check if all the values exist and are proper type
+    for (const auto& field : expectedValues) {
+        const QString fullKey = FullKey(field.key.toString());
+        if (!settings.contains(fullKey))
+            return std::nullopt;
+        
+        // TODO: Validate value types (#1)
+        //  - value.typeId() doesn't work
+        // qDebug() << "Expected type:" << field.expectedType << "got:" << value.typeId();*/
+    }
+    
+    const QString name          = settings.value(FullKey(u"name")).toString();
+    const int currentPrice      = settings.value(FullKey(u"currentPrice")).toInt();
+    const bool available        = settings.value(FullKey(u"available")).toBool();
+    const QString url           = settings.value(FullKey(u"url")).toString();
 
-    const bool onSale = settings.value(kLastProductKey + "/onSale", false).toBool();
+    const QStringList imageUrls = settings.value(FullKey(u"imageUrls")).toStringList();
+    if (imageUrls.isEmpty())
+        return std::nullopt;
+    
+    const bool onSale = settings.value(FullKey(u"onSale")).toBool();
     if (onSale) {
-        const int regularPrice = settings.value(kLastProductKey + "/regularPrice", 0).toInt();
+        const int regularPrice = settings.value(FullKey(u"regularPrice")).toInt();
         return Core::Product(name, currentPrice, available, url, imageUrls, regularPrice);
     }
 
     return Core::Product(name, currentPrice, available, url, imageUrls);
 }
 
-void Settings::SaveNewProduct(Core::Product product)
+void Settings::SaveNewProduct(const Core::Product& product)
 {
     QSettings settings = MakeSettings();
 

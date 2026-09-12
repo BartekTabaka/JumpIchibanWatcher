@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QJsonValue>
+#include <QStringView>
 
 namespace
 {
@@ -13,8 +14,8 @@ namespace
         QStringView key;
         QJsonValue::Type expectedType;
     };
-
-    constexpr std::array<JsonField, 5> expectedFields{ {
+    
+    constexpr std::array<JsonField, 5> expectedFields { {
         { u"title",     QJsonValue::String },
         { u"price",     QJsonValue::Double },
         { u"available", QJsonValue::Bool },
@@ -42,19 +43,21 @@ namespace Core
         const QJsonObject rootObj = doc.object();
 
         for (const auto& field : expectedFields) {
+            const auto key = field.key.toString();
+
             // Check if all of the necessary values exist
-            if (!rootObj.contains(field.key))
+            if (!rootObj.contains(key))
                 return std::unexpected(JsonError{ 
                     JsonErrorCode::KeyNotFound, 
-                    QString("'%1' key not found").arg(field.key) 
+                    QString("'%1' key not found").arg(key) 
                 });
 
             // Check values types
-            const auto value = rootObj.value(field.key);
+            const auto value = rootObj.value(key);
             if (value.type() != field.expectedType)
                 return std::unexpected(JsonError{ 
                     JsonErrorCode::InvalidValueType,
-                    QString("'%1' key value has invalid type").arg(field.key)
+                    QString("'%1' key value has invalid type").arg(key)
                 });
         }
         // compare_at_price is optional in terms of type (double or null),
@@ -101,6 +104,8 @@ namespace Core
             if (value.isString())
                 imageUrls.append(value.toString());
         }
+
+        qDebug() << "Parsed product from JSON";
 
         // Check if the product is on sale
         const QJsonValue compareAtPrice = rootObj.value("compare_at_price");

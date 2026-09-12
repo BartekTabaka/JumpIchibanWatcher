@@ -1,5 +1,6 @@
 #pragma once
 #include <QSettings>
+#include <optional>
 
 #include "Core/Product.h"
 
@@ -10,6 +11,6 @@ public:
 	// Application settings (future commits)
 
 	// Product
-	static Core::Product LoadLastProduct();
-	static void SaveNewProduct(Core::Product product);
+	static std::optional<Core::Product> LoadLastProduct();
+	static void SaveNewProduct(const Core::Product& product);
 };

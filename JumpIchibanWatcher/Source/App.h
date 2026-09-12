@@ -16,9 +16,16 @@ public:
 
 	void createProduct();
 	void showProductInfo();
+
+	// void for now, comparing results will be shown
+	// in console, might become a different type when
+	// connecting the program with QML / QWidgets
+	void compareProducts();
+private:
+	void commitNewProduct();
 private:
 	QApplication& m_App;
 
-	Core::Product m_LastProduct;
+	std::optional<Core::Product> m_LastProduct;
 	std::optional<Core::Product> m_NewProduct;
 };
