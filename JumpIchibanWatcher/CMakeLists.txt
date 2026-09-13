@@ -13,6 +13,8 @@ set(SOURCES
     Source/App.h
     Source/App.cpp
     Source/AppIdentity.h
+    Source/NetworkManager.h
+    Source/NetworkManager.cpp
     Source/Settings.h
     Source/Settings.cpp
 

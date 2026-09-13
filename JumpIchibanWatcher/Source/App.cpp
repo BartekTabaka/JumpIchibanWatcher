@@ -1,10 +1,6 @@
 ﻿#include "App.h"
 
 #include "Settings.h"
-#include <QEventLoop>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#include <QUrl>
 
 namespace
 {
@@ -28,12 +24,13 @@ namespace
 	}
 
 	// Helper for now
-	QUrl BuildUrl()
+	QUrl GetUrl()
 	{
 		QUrl url;
 		url.setScheme("https");
 		url.setHost("jumpichiban.com");
-		url.setPath("/products/ichiban-kuji-my-dress-up-darling-season-2-last-one-prize-marin-kitagawa-artscale-memoria-figure.js");
+		url.setPath("/products/ichiban-kuji-my-dress-up-darling-season-2-last-one-prize-marin-kitagawa-artscale-memoria-figure");
+		// The user will simply copy the url of HTML site, '.js' will be added inside the NetworkManager class
 
 		return url;
 	}
@@ -47,8 +44,6 @@ App::App(QApplication& app) : m_App(app),
 	qDebug() << "Loaded last product from settings";
 	qDebug() << "The app is working!";
 	qDebug() << "-----------------------";
-
-	m_NetworkManager.setTransferTimeout(15000); // 15s
 }
 
 void App::createProduct()
@@ -58,7 +53,7 @@ void App::createProduct()
 	// For now, it's only doing 1 thing, so I decided to go with simple if statement. //
 	////////////////////////////////////////////////////////////////////////////////////
 	
-	auto fetchedContent = fetchProductJson();
+	auto fetchedContent = m_NetworkManager.fetchProductJson(GetUrl());
 	if (!fetchedContent) {
 		qCritical() << "Fetching error:" << fetchedContent.error();
 		return;
@@ -174,46 +169,6 @@ void App::compareProducts()
 	if (newUrl != oldUrl) qWarning() << "Product's URL has changed";
 
 	commitNewProduct();
-}
-
-std::expected<QByteArray, QString> App::fetchProductJson()
-{
-	// Request and headers
-	QNetworkRequest request(BuildUrl());
-	request.setHeader(QNetworkRequest::UserAgentHeader,
-		 QByteArray("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-					"AppleWebKit/537.36 (KHTML, like Gecko) "
-					"Chrome/140.0.0.0 Safari/537.36"));
-	request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
-
-	// Reply
-	QNetworkReply *reply = m_NetworkManager.get(request);
-
-	// Event loop
-	QEventLoop eventLoop;
-	QObject::connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
-	eventLoop.exec();
-
-	const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-	// Success
-	if (reply->error() == QNetworkReply::NoError && httpStatus == 200) {
-		const QByteArray data = reply->readAll();
-		reply->deleteLater();
-		return data;
-	}
-	// Errors
-	else if (httpStatus == 404) {
-		qWarning() << "Product doesn't exist";
-	}
-	else if (httpStatus == 429 || httpStatus == 503) {
-		qWarning() << "Rate limit, code:" << httpStatus << "- slow down!";
-	}
-	else {
-		qWarning() << "Something went wrong:" << reply->errorString() << "HTTP" << httpStatus;
-	}
-
-	reply->deleteLater();
-	return std::unexpected(reply->errorString());
 }
 
 void App::commitNewProduct()
