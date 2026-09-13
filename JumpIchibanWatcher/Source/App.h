@@ -3,6 +3,7 @@
 
 #include "Core/Mapper.h"
 #include <optional>
+#include <QNetworkAccessManager>
 
 // -- Forward -----------------
 class App;
@@ -21,6 +22,9 @@ public:
 	// in console, might become a different type when
 	// connecting the program with QML / QWidgets
 	void compareProducts();
+
+	// - Might move this functionality to another class -
+	std::expected<QByteArray, QString> fetchProductJson();
 private:
 	void commitNewProduct();
 private:
@@ -28,4 +32,6 @@ private:
 
 	std::optional<Core::Product> m_LastProduct;
 	std::optional<Core::Product> m_NewProduct;
+
+	QNetworkAccessManager m_NetworkManager;
 };

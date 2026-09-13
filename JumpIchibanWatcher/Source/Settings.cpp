@@ -38,7 +38,7 @@ namespace
         { u"url",          QMetaType::QString },
         { u"imageUrls",    QMetaType::QStringList }
     } };
-}
+} // namespace
 
 std::optional<Core::Product> Settings::LoadLastProduct()
 {

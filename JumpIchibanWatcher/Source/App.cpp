@@ -1,6 +1,10 @@
 ﻿#include "App.h"
 
 #include "Settings.h"
+#include <QEventLoop>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QUrl>
 
 namespace
 {
@@ -22,7 +26,18 @@ namespace
 
 		dbg << label << value;
 	}
-}
+
+	// Helper for now
+	QUrl BuildUrl()
+	{
+		QUrl url;
+		url.setScheme("https");
+		url.setHost("jumpichiban.com");
+		url.setPath("/products/ichiban-kuji-my-dress-up-darling-season-2-last-one-prize-marin-kitagawa-artscale-memoria-figure.js");
+
+		return url;
+	}
+} // namespace
 
 App *g_App = nullptr;
 
@@ -32,6 +47,8 @@ App::App(QApplication& app) : m_App(app),
 	qDebug() << "Loaded last product from settings";
 	qDebug() << "The app is working!";
 	qDebug() << "-----------------------";
+
+	m_NetworkManager.setTransferTimeout(15000); // 15s
 }
 
 void App::createProduct()
@@ -159,22 +176,32 @@ void App::createProduct()
 		"selling_plan_groups": []
 	})";
 
-	auto result = Core::mapToProduct(fetchedContent)
-		.transform([this](const auto& product)
-		{
-			m_NewProduct = product;
-			qDebug() << "App received Product";
-			qDebug() << "-----------------------";
+	///////////////////////////////////////////////////////////////////////////////////////////
+	// NOTE: .transform should be used with function chain, for now it's only doing 1 thing, //
+	// so I decided to go with simple *if* for now											 //
+	///////////////////////////////////////////////////////////////////////////////////////////
 
-			Settings::SaveNewProduct(m_NewProduct.value());
+	auto fetched = fetchProductJson();
+	if (fetched) {
+		qDebug() << "Fetched content:";
+		qDebug().noquote() << *fetched;
+		qDebug() << "-----------------------";
+	}
+	else {
+		qCritical() << "Fetching error:" << fetched.error();
+	}
 
-			return product;
-		})
-		.or_else([](const auto& error) -> std::expected<Core::Product, Core::JsonError>
-		{
-			qDebug() << error;
-			return std::unexpected(error);
-		});
+	auto mappingResult = Core::mapToProduct(fetchedContent);
+	if (mappingResult) {
+		m_NewProduct = mappingResult.value();
+		qDebug() << "App received Product";
+		qDebug() << "-----------------------";
+
+		Settings::SaveNewProduct(m_NewProduct.value());
+	}
+	else {
+		qCritical() << mappingResult.error();
+	}
 }
 
 void App::showProductInfo()
@@ -272,6 +299,46 @@ void App::compareProducts()
 	if (newUrl != oldUrl) qDebug() << "Product's URL has changed";
 
 	commitNewProduct();
+}
+
+std::expected<QByteArray, QString> App::fetchProductJson()
+{
+	// Request and headers
+	QNetworkRequest request(BuildUrl());
+	request.setHeader(QNetworkRequest::UserAgentHeader,
+		 QByteArray("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+					"AppleWebKit/537.36 (KHTML, like Gecko) "
+					"Chrome/140.0.0.0 Safari/537.36"));
+	request.setRawHeader("Accept", "application/json, text/javascript, */*; q=0.01");
+
+	// Reply
+	QNetworkReply *reply = m_NetworkManager.get(request);
+
+	// Event loop
+	QEventLoop eventLoop;
+	QObject::connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
+	eventLoop.exec();
+
+	const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+	// Success
+	if (reply->error() == QNetworkReply::NoError && httpStatus == 200) {
+		const QByteArray data = reply->readAll();
+		reply->deleteLater();
+		return data;
+	}
+	// Errors
+	else if (httpStatus == 404) {
+		qWarning() << "Product doesn't exist";
+	}
+	else if (httpStatus == 429 || httpStatus == 503) {
+		qWarning() << "Rate limit, code:" << httpStatus << "- slow down!";
+	}
+	else {
+		qWarning() << "Something went wrong:" << reply->errorString() << "HTTP" << httpStatus;
+	}
+
+	reply->deleteLater();
+	return std::unexpected(reply->errorString());
 }
 
 void App::commitNewProduct()

@@ -22,7 +22,7 @@ namespace
         { u"url",       QJsonValue::String },
         { u"images",    QJsonValue::Array },
     } };
-}
+} // namespace
 
 namespace Core
 {
@@ -117,4 +117,4 @@ namespace Core
 
         return Product(name, currentPrice, available, url, imageUrls);
     }
-}
+} // namespace Core
