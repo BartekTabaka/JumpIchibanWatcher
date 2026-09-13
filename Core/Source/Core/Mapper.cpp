@@ -65,32 +65,6 @@ namespace Core
         if (!rootObj.contains("compare_at_price"))
             return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'compare_at_price' key not found" });
 
-        /*// Check if all of the necessary values exist
-        if (!rootObj.contains("title"))
-            return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'title' key not found" });
-        if (!rootObj.contains("price"))
-            return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'price' key not found" });
-        if (!rootObj.contains("available"))
-            return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'available' key not found" });
-        if (!rootObj.contains("url"))
-            return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'url' key not found" });
-        if (!rootObj.contains("images"))
-            return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'images' key not found" });
-        if (!rootObj.contains("compare_at_price"))
-            return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'compare_at_price' key not found" });
-
-        // Check values types
-        if (!rootObj.value("title").isString())
-            return std::unexpected(JsonError{ JsonErrorCode::InvalidValueType, "'title' key value isn't string" });
-        if (!rootObj.value("price").isDouble())
-            return std::unexpected(JsonError{ JsonErrorCode::InvalidValueType, "'price' key value isn't double" });
-        if (!rootObj.value("available").isBool())
-            return std::unexpected(JsonError{ JsonErrorCode::InvalidValueType, "'available' key value isn't bool" });
-        if (!rootObj.value("url").isString())
-            return std::unexpected(JsonError{ JsonErrorCode::InvalidValueType, "'url' key value isn't string" });
-        if (!rootObj.value("images").isArray())
-            return std::unexpected(JsonError{ JsonErrorCode::InvalidValueType, "'images' key value isn't array" });*/
-
         const QString name = rootObj.value("title").toString();
         const int currentPrice = rootObj.value("price").toInt();
         const bool available = rootObj.value("available").toBool();
@@ -106,6 +80,7 @@ namespace Core
         }
 
         qDebug() << "Parsed product from JSON";
+        qDebug() << "-----------------------";
 
         // Check if the product is on sale
         const QJsonValue compareAtPrice = rootObj.value("compare_at_price");
