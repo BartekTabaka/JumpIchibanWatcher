@@ -155,8 +155,14 @@ void App::compareProducts()
 		if (newPrice == oldPrice)
 			LogPrice("Price didn't change:", Price(newPrice));
 		else {
-			if (newPrice < oldPrice) qDebug() << "Price is lower";
-			else qDebug() << "Price is higher";
+			if (newPrice < oldPrice) {
+				const int difference = oldPrice - newPrice;
+				qDebug() << "Price is lower by:" << difference;
+			}
+			else {
+				const int difference = newPrice - oldPrice;
+				qDebug() << "Price is higher by:" << difference;
+			}
 
 			LogPrice("Previous price:", Price(lastProduct.currentPrice()));
 			LogPrice("Current price:", Price(newProduct.currentPrice()));
