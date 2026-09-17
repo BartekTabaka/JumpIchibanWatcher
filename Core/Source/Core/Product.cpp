@@ -1,5 +1,6 @@
 #include "Product.h"
 
+#include <optional>
 #include <QDebug>
 
 Core::Product::Product(const QString& name, int currentPrice, bool available, const QString& url, 

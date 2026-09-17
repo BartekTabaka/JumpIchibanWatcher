@@ -1,5 +1,6 @@
 #include "NetworkManager.h"
 
+#include <expected>
 #include <QByteArray>
 #include <QDebug>
 #include <QEventLoop>

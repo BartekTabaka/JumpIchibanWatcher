@@ -7,6 +7,7 @@
 #include <QJsonParseError>
 #include <QJsonValue>
 #include <QStringView>
+#include "Product.h"
 
 namespace
 {

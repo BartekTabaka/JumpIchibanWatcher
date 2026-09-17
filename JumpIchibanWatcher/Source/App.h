@@ -1,9 +1,11 @@
 #pragma once
 #include <QApplication>
 
-#include "Core/Mapper.h"
-#include "NetworkManager.h"
 #include <optional>
+#include <QObject>
+#include "Core/Mapper.h"
+#include "Core/Product.h"
+#include "NetworkManager.h"
 
 // -- Forward -----------------
 class App;

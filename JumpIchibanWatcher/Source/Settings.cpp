@@ -1,10 +1,15 @@
 #include "Settings.h"
 
-#include "AppIdentity.h"
+
 #include <array>
+#include <optional>
 #include <QDebug>
 #include <QMetaType>
+#include <QSettings>
+#include <QString>
 #include <QStringView>
+#include "AppIdentity.h"
+#include "Core/Product.h"
 
 namespace
 {

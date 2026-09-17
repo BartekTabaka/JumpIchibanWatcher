@@ -1,7 +1,7 @@
 #pragma once
 #include <QSettings>
-#include <optional>
 
+#include <optional>
 #include "Core/Product.h"
 
 // Static-only wrapper around QSettings for the app's persisted preferences.

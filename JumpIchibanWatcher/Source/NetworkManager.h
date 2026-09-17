@@ -1,7 +1,11 @@
 #pragma once
-#include <QObject>
 #include <QNetworkAccessManager>
+
 #include <expected>
+#include <QByteArray>
+#include <QObject>
+#include <QString>
+#include <QUrl>
 
 class NetworkManager : public QObject {
 	Q_OBJECT

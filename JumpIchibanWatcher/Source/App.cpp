@@ -1,5 +1,10 @@
 ﻿#include "App.h"
 
+#include <QApplication>
+#include <QDebug>
+#include <QString>
+#include <QUrl>
+#include "Core/Product.h"
 #include "Settings.h"
 
 namespace

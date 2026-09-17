@@ -1,42 +1,43 @@
 #pragma once
-#include "Product.h"
-#include <QByteArray>
 #include <expected>
+#include <QByteArray>
 #include <QDebug>
+#include <QString>
+#include "Product.h"
 
 namespace Core
 {
-    // Error code enum
-    enum class JsonErrorCode {
-        ParseError,
-        RootObjectNotFound,
-        KeyNotFound,
-        InvalidValueType
-    };
+	// Error code enum
+	enum class JsonErrorCode {
+		ParseError,
+		RootObjectNotFound,
+		KeyNotFound,
+		InvalidValueType
+	};
 
-    // Structured error with context
-    struct JsonError {
-        JsonErrorCode code;
-        QString message;
+	// Structured error with context
+	struct JsonError {
+		JsonErrorCode code;
+		QString message;
 
-        friend QDebug operator<<(QDebug debug, JsonError error)
-        {
-            debug << "JsonError:";
-            switch (error.code) {
-            case JsonErrorCode::ParseError:         debug << "parsing error"; break;
-            case JsonErrorCode::RootObjectNotFound: debug << "root object not found"; break;
-            case JsonErrorCode::KeyNotFound:        debug << "key not found"; break;
-            case JsonErrorCode::InvalidValueType:   debug << "invalid value type"; break;
-            default:                                debug << "something went wrong - unknown error"; break;
-            }
-            if (!error.message.isEmpty()) {
-                QDebugStateSaver saver(debug);
-                debug.noquote() << '(' + error.message + ')';
-            }
+		friend QDebug operator<<(QDebug debug, JsonError error)
+		{
+			debug << "JsonError:";
+			switch (error.code) {
+			case JsonErrorCode::ParseError:         debug << "parsing error"; break;
+			case JsonErrorCode::RootObjectNotFound: debug << "root object not found"; break;
+			case JsonErrorCode::KeyNotFound:        debug << "key not found"; break;
+			case JsonErrorCode::InvalidValueType:   debug << "invalid value type"; break;
+			default:                                debug << "something went wrong - unknown error"; break;
+			}
+			if (!error.message.isEmpty()) {
+				QDebugStateSaver saver(debug);
+				debug.noquote() << '(' + error.message + ')';
+			}
 
-            return debug;
-        }
-    };
+			return debug;
+		}
+	};
 
 	std::expected<Product, JsonError> mapToProduct(const QByteArray& fetchedContent);
 }
