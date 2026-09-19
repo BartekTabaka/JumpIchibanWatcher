@@ -11,6 +11,6 @@ public:
 	// Application settings (future commits)
 
 	// Product
-	static std::optional<Core::Product> LoadLastProduct();
-	static void SaveNewProduct(const Core::Product& product);
+	static std::optional<Core::Product> loadLastProduct();
+	static void saveNewProduct(const Core::Product& product);
 };

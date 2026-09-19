@@ -19,8 +19,8 @@ std::expected<QByteArray, QString> NetworkManager::fetchProductJson(const QUrl& 
 	// Modify URL
 	QUrl targetUrl = url;
 	targetUrl.setPath(targetUrl.path() + ".js");
-	qDebug() << "Modified URL:" << targetUrl.toString();
-	qDebug() << "-----------------------";
+	//qDebug() << "Modified URL:" << targetUrl.toString();
+	//qDebug() << "-----------------------";
 
 	// Request and headers
 	QNetworkRequest request(targetUrl);

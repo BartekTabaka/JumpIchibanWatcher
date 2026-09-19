@@ -45,7 +45,7 @@ namespace
     } };
 } // namespace
 
-std::optional<Core::Product> Settings::LoadLastProduct()
+std::optional<Core::Product> Settings::loadLastProduct()
 {
     const QSettings settings = MakeSettings();
 
@@ -78,7 +78,7 @@ std::optional<Core::Product> Settings::LoadLastProduct()
     return Core::Product(name, currentPrice, available, url, imageUrls);
 }
 
-void Settings::SaveNewProduct(const Core::Product& product)
+void Settings::saveNewProduct(const Core::Product& product)
 {
     QSettings settings = MakeSettings();
 

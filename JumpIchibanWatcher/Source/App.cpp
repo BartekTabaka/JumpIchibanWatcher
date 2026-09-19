@@ -12,14 +12,14 @@ namespace
 	// TOOD: add currencies
 
 	// Price wrapper
-	QString Price(int cents)
+	QString price(int cents)
 	{
 		double full = (static_cast<double>(cents) / 100);
 		return QString::number(full, 'f', 2) + " PLN";
 	}
 
 	// Logging helper
-	void LogPrice(const QString& label, const QString& value)
+	void logPrice(const QString& label, const QString& value)
 	{
 		QDebug dbg = qDebug();
 		QDebugStateSaver saver(dbg);
@@ -29,7 +29,7 @@ namespace
 	}
 
 	// Helper for now
-	QUrl GetUrl()
+	QUrl getUrl()
 	{
 		QUrl url;
 		url.setScheme("https");
@@ -44,27 +44,33 @@ namespace
 App *g_App = nullptr;
 
 App::App(QApplication& app) : m_App(app),
-							  m_LastProduct(Settings::LoadLastProduct())
+							  m_LastProduct(Settings::loadLastProduct())
 {
-	qDebug() << "Loaded last product from settings";
+	if (!m_LastProduct)
+		qWarning() << "Loading last product info from settings failed!";
+	else
+		qDebug() << "Loaded last product info from settings";
+
 	qDebug() << "The app is working!";
 	qDebug() << "-----------------------";
 }
 
 void App::createProduct()
 {
-	////////////////////////////////////////////////////////////////////////////////////
-	// NOTE: .transform should be used for function chains.						  	  //
-	// For now, it's only doing 1 thing, so I decided to go with simple if statement. //
-	////////////////////////////////////////////////////////////////////////////////////
-	
-	auto fetchedContent = m_NetworkManager.fetchProductJson(GetUrl());
+	///////////////////////////////////////////////////////////////////////////////////
+	// NOTE: Fetch and parsing return different error types (FetchError vs           //
+	// JsonError), so `.and_then()` can't chain them directly - it would require     //
+	// `.transform_error()` first to unify both into one type. Plain `if`s are more  //
+	// readable here, so I'm sticking with them on purpose, not as a workaround.     //
+	///////////////////////////////////////////////////////////////////////////////////
+
+	auto fetchedContent = m_NetworkManager.fetchProductJson(getUrl());
 	if (!fetchedContent) {
 		qCritical() << "Fetching error:" << fetchedContent.error();
 		return;
 	}
 
-	// fetchedContent.value() == *fetchedContent
+	// NOTE: fetchedContent.value() == *fetchedContent
 	auto mappingResult = Core::mapToProduct(*fetchedContent);
 	if (!mappingResult) {
 		qCritical() << mappingResult.error();
@@ -76,7 +82,7 @@ void App::createProduct()
 	qDebug() << "App received Product";
 	qDebug() << "-----------------------";
 
-	Settings::SaveNewProduct(*m_NewProduct);
+	Settings::saveNewProduct(*m_NewProduct);
 }
 
 void App::showProductInfo()
@@ -97,13 +103,41 @@ void App::showProductInfo()
 	qDebug() << "-----------------------";
 }
 
+// NOTE: Before every return we must commitNewProduct() - except when m_NewProduct is std::nullopt
 void App::compareProducts()
 {
-	if (!m_NewProduct || !m_LastProduct) 
+	if (!m_NewProduct) {
+		qCritical() << "New product is set to std::nullopt - something went wrong!";
 		return;
+	}
 
-	// Aliases for easier reading
+	// Alias for easier reading
 	const Core::Product& newProduct = m_NewProduct.value();
+
+	if (!m_LastProduct) {
+		qWarning() << "Couldn't read last product info - it does not exist yet or something went wrong";
+
+		// Name
+		qDebug() << newProduct.name() << "info:";
+
+		// Available
+		if (newProduct.available())
+			qDebug() << "Product is available";
+		else
+			qDebug() << "Product is not available";
+
+		// Sale and price
+		if (newProduct.onSale()) {
+			qDebug() << "Product is on sale!";
+			logPrice("Regular price:", price(newProduct.regularPrice()));
+		}
+		logPrice("Current price:", price(newProduct.currentPrice()));
+
+		commitNewProduct();
+		return;
+	}
+
+	// 2nd alias
 	const Core::Product& lastProduct = m_LastProduct.value();
 
 	// --------------------------------------------------------
@@ -118,8 +152,9 @@ void App::compareProducts()
 	// --------------------------------------------------------
 
 	// Name
-	if (newProduct.name() != lastProduct.name()) 
+	if (newProduct.name() != lastProduct.name())
 		qWarning() << "Product names don't match - something might have gone wrong";
+	qDebug() << newProduct.name() << "info:";
 
 	// Available
 	const bool wasAvailable = lastProduct.available();
@@ -148,8 +183,8 @@ void App::compareProducts()
 		// Sale still lasts
 		else qDebug() << "Product is still on sale";
 
-		LogPrice("Regular price:", Price(newProduct.regularPrice()));
-		LogPrice("Current price:", Price(newProduct.currentPrice()));
+		logPrice("Regular price:", price(newProduct.regularPrice()));
+		logPrice("Current price:", price(newProduct.currentPrice()));
 	}
 	else {
 		if (wasOnSale) qDebug() << "Product is no longer on sale";
@@ -158,19 +193,19 @@ void App::compareProducts()
 		const int oldPrice = lastProduct.currentPrice();
 		const int newPrice = newProduct.currentPrice();
 		if (newPrice == oldPrice)
-			LogPrice("Price didn't change:", Price(newPrice));
+			logPrice("Price didn't change:", price(newPrice));
 		else {
 			if (newPrice < oldPrice) {
-				const int difference = oldPrice - newPrice;
-				qDebug() << "Price is lower by:" << difference;
+				const int difference = (oldPrice - newPrice) / 100;
+				qDebug() << "Price is lower by:" << difference << "PLN";
 			}
 			else {
-				const int difference = newPrice - oldPrice;
-				qDebug() << "Price is higher by:" << difference;
+				const int difference = (newPrice - oldPrice) / 100;
+				qDebug() << "Price is higher by:" << difference << "PLN";
 			}
 
-			LogPrice("Previous price:", Price(lastProduct.currentPrice()));
-			LogPrice("Current price:", Price(newProduct.currentPrice()));
+			logPrice("Previous price:", price(lastProduct.currentPrice()));
+			logPrice("Current price:", price(newProduct.currentPrice()));
 		}
 	}
 
