@@ -1,7 +1,9 @@
 #pragma once
+#include <optional>
+#include <QList>
 #include <QString>
 #include <QStringList>
-#include <optional>
+#include <QUrl>
 
 namespace Core
 {

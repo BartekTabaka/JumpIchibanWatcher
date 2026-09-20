@@ -17,7 +17,7 @@ class App : public QObject {
 public:
 	explicit App(QApplication& app);
 
-	void createProduct();
+	void refreshProduct();
 	void showProductInfo();
 
 	// void for now, comparing results will be shown

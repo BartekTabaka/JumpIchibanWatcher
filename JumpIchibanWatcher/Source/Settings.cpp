@@ -2,8 +2,9 @@
 
 
 #include <array>
-#include <optional>
+#include <expected>
 #include <QDebug>
+#include <QFile>
 #include <QMetaType>
 #include <QSettings>
 #include <QString>
@@ -45,16 +46,27 @@ namespace
     } };
 } // namespace
 
-std::optional<Core::Product> Settings::loadLastProduct()
+std::expected<Core::Product, LoadError> Settings::loadLastProduct()
 {
     const QSettings settings = MakeSettings();
 
+    if (!QFile::exists(settings.fileName()))
+        return std::unexpected(LoadError{ LoadErrorCode::FileNotFound, "Config file not found!" });
+
+    switch (settings.status()) {
+        case QSettings::FormatError: 
+            return std::unexpected(LoadError{ LoadErrorCode::InvalidFormat, "Config file is in wrong format!" });
+        case QSettings::AccessError:
+            return std::unexpected(LoadError{ LoadErrorCode::CannotOpenFile, "Couldn't open config file!" });
+    }
+
     // Check if all the values exist and are proper type
     for (const auto& field : expectedValues) {
-        const QString fullKey = FullKey(field.key.toString());
+        const QString key = field.key.toString();
+        const QString fullKey = FullKey(key);
         if (!settings.contains(fullKey))
-            return std::nullopt;
-        
+            return std::unexpected(LoadError{ LoadErrorCode::MissingValue, QString("'%1' key not found in last product info!").arg(key)});
+
         // TODO: Validate value types (#1)
         //  - value.typeId() doesn't work
         // qDebug() << "Expected type:" << field.expectedType << "got:" << value.typeId();*/
@@ -67,8 +79,8 @@ std::optional<Core::Product> Settings::loadLastProduct()
 
     const QStringList imageUrls = settings.value(FullKey(u"imageUrls")).toStringList();
     if (imageUrls.isEmpty())
-        return std::nullopt;
-    
+        return std::unexpected(LoadError{ LoadErrorCode::MissingValue, "'imageUrls' list is empty!" });
+
     const bool onSale = settings.value(FullKey(u"onSale")).toBool();
     if (onSale) {
         const int regularPrice = settings.value(FullKey(u"regularPrice")).toInt();
@@ -78,11 +90,12 @@ std::optional<Core::Product> Settings::loadLastProduct()
     return Core::Product(name, currentPrice, available, url, imageUrls);
 }
 
-void Settings::saveNewProduct(const Core::Product& product)
+void Settings::saveProduct(const Core::Product& product)
 {
     QSettings settings = MakeSettings();
 
     settings.beginGroup(kLastProductKey);
+    settings.remove("");
 
     settings.setValue("name", product.name());
     settings.setValue("currentPrice", product.currentPrice());
@@ -93,4 +106,5 @@ void Settings::saveNewProduct(const Core::Product& product)
     settings.setValue("imageUrls", product.imageUrls());
 
     settings.endGroup();
+    settings.sync();
 }

@@ -1,9 +1,11 @@
 ﻿#include "App.h"
 
+#include <optional>
 #include <QApplication>
 #include <QDebug>
 #include <QString>
 #include <QUrl>
+#include <utility>
 #include "Core/Product.h"
 #include "Settings.h"
 
@@ -35,16 +37,27 @@ namespace
 		url.setScheme("https");
 		url.setHost("jumpichiban.com");
 		url.setPath("/products/ichiban-kuji-my-dress-up-darling-season-2-last-one-prize-marin-kitagawa-artscale-memoria-figure");
-		// The user will simply copy the url of HTML site, '.js' will be added inside the NetworkManager class
+		// The user will simply copy and paste the url of HTML site, '.js' will be added inside the NetworkManager class
 
 		return url;
+	}
+
+	std::optional<Core::Product> loadLastProductOrLog()
+	{
+		auto result = Settings::loadLastProduct();
+		if (!result) {
+			qCritical() << result.error();
+			return std::nullopt;
+		}
+
+		return std::move(*result);
 	}
 } // namespace
 
 App *g_App = nullptr;
 
 App::App(QApplication& app) : m_App(app),
-							  m_LastProduct(Settings::loadLastProduct())
+							  m_LastProduct(loadLastProductOrLog())
 {
 	if (!m_LastProduct)
 		qWarning() << "Loading last product info from settings failed!";
@@ -55,7 +68,7 @@ App::App(QApplication& app) : m_App(app),
 	qDebug() << "-----------------------";
 }
 
-void App::createProduct()
+void App::refreshProduct()
 {
 	///////////////////////////////////////////////////////////////////////////////////
 	// NOTE: Fetch and parsing return different error types (FetchError vs           //
@@ -77,12 +90,12 @@ void App::createProduct()
 		return;
 	}
 
-	m_NewProduct = *mappingResult;
+	m_NewProduct = std::move(*mappingResult);
 
 	qDebug() << "App received Product";
 	qDebug() << "-----------------------";
 
-	Settings::saveNewProduct(*m_NewProduct);
+	Settings::saveProduct(*m_NewProduct);
 }
 
 void App::showProductInfo()
