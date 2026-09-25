@@ -70,12 +70,14 @@ App::App(QApplication& app) : m_App(app),
 
 void App::refreshProduct()
 {
-	///////////////////////////////////////////////////////////////////////////////////
-	// NOTE: Fetch and parsing return different error types (FetchError vs           //
-	// JsonError), so `.and_then()` can't chain them directly - it would require     //
-	// `.transform_error()` first to unify both into one type. Plain `if`s are more  //
-	// readable here, so I'm sticking with them on purpose, not as a workaround.     //
-	///////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////
+	//																				  //
+	//  NOTE: Fetch and parsing return different error types (FetchError vs           //
+	//  JsonError), so `.and_then()` can't chain them directly - it would require     //
+	//  `.transform_error()` first to unify both into one type. Plain `if`s are more  //
+	//  readable here, so I'm sticking with them on purpose, not as a workaround.     //
+	//																				  //
+	////////////////////////////////////////////////////////////////////////////////////
 
 	auto fetchedContent = m_NetworkManager.fetchProductJson(getUrl());
 	if (!fetchedContent) {
@@ -95,7 +97,11 @@ void App::refreshProduct()
 	qDebug() << "App received Product";
 	qDebug() << "-----------------------";
 
-	Settings::saveProduct(*m_NewProduct);
+	auto savingResult = Settings::saveProduct(*m_NewProduct);
+	if (!savingResult) {
+		qCritical() << "Saving error:" << fetchedContent.error();
+		return;
+	}
 }
 
 void App::showProductInfo()

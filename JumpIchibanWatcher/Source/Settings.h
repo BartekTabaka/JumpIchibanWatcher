@@ -6,30 +6,30 @@
 #include <QString>
 #include "Core/Product.h"
 
-enum class LoadErrorCode {
+enum class SettingsErrorCode {
 	FileNotFound,
 	CannotOpenFile,
 	InvalidFormat,
 	//InvalidValueType,	TODO (#1) 
-	MissingValue
+	MissingValue, // only returned by loadLastProduct()
 	//MissingSetting <- don't need it yet, will introduce it with application settings
 };
 
-struct LoadError {
-	LoadErrorCode code;
+struct SettingsError {
+	SettingsErrorCode code;
 	QString message;
 
-	friend QDebug operator<<(QDebug debug, LoadError error)
+	friend QDebug operator<<(QDebug debug, SettingsError error)
 	{
-		debug << "LoadError:";
+		debug << "SettingsError:";
 		switch (error.code) {
-		case LoadErrorCode::FileNotFound:	  debug << "file not found"; break;
-		case LoadErrorCode::CannotOpenFile:   debug << "cannot open file"; break;
-		case LoadErrorCode::InvalidFormat:	  debug << "invalid format"; break;
-		//case LoadErrorCode::InvalidValueType: debug << "invalid value"; break;
-		case LoadErrorCode::MissingValue:	  debug << "missing value"; break;
-		//case LoadErrorCode::MissingSetting:   debug << "missing setting"; break;
-		default:							  debug << "something went wrong - unknwon error"; break;
+		case SettingsErrorCode::FileNotFound:	  debug << "file not found"; break;
+		case SettingsErrorCode::CannotOpenFile:   debug << "cannot open file"; break;
+		case SettingsErrorCode::InvalidFormat:	  debug << "invalid format"; break;
+		//case SettingsErrorCode::InvalidValueType: debug << "invalid value"; break;
+		case SettingsErrorCode::MissingValue:	  debug << "missing value"; break;
+		//case SettingsErrorCode::MissingSetting:   debug << "missing setting"; break;
+		default:							  debug << "something went wrong - unknown error"; break;
 		}
 		if (!error.message.isEmpty()) {
 			QDebugStateSaver saver(debug);
@@ -47,6 +47,6 @@ public:
 	// Application settings (future commits)
 
 	// Product
-	static std::expected<Core::Product, LoadError> loadLastProduct();
-	static void saveProduct(const Core::Product& product);
+	static std::expected<Core::Product, SettingsError> loadLastProduct();
+	static std::expected<void, SettingsError> saveProduct(const Core::Product& product);
 };

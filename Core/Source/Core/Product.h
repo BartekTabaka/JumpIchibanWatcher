@@ -3,7 +3,7 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
-#include <QUrl>
+//#include <QUrl>
 
 namespace Core
 {
