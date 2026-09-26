@@ -99,7 +99,7 @@ void App::refreshProduct()
 
 	auto savingResult = Settings::saveProduct(*m_NewProduct);
 	if (!savingResult) {
-		qCritical() << "Saving error:" << fetchedContent.error();
+		qCritical() << savingResult.error();
 		return;
 	}
 }
@@ -229,8 +229,8 @@ void App::compareProducts()
 	}
 
 	// Url
-	const QString oldUrl = lastProduct.url();
-	const QString newUrl = newProduct.url();
+	const QUrl oldUrl = lastProduct.url();
+	const QUrl newUrl = newProduct.url();
 	if (newUrl != oldUrl) qWarning() << "Product's URL has changed";
 
 	commitNewProduct();

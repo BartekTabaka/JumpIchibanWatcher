@@ -12,6 +12,7 @@ namespace Core
 		ParseError,
 		RootObjectNotFound,
 		KeyNotFound,
+		InvalidValue,
 		InvalidValueType
 	};
 
@@ -27,6 +28,7 @@ namespace Core
 			case JsonErrorCode::ParseError:         debug << "parsing error"; break;
 			case JsonErrorCode::RootObjectNotFound: debug << "root object not found"; break;
 			case JsonErrorCode::KeyNotFound:        debug << "key not found"; break;
+			case JsonErrorCode::InvalidValue:		debug << "invalid value"; break;
 			case JsonErrorCode::InvalidValueType:   debug << "invalid value type"; break;
 			default:                                debug << "something went wrong - unknown error"; break;
 			}

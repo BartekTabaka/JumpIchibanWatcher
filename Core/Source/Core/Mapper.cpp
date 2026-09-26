@@ -6,7 +6,9 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QJsonValue>
+#include <QList>
 #include <QStringView>
+#include <QUrl>
 #include "Product.h"
 
 namespace
@@ -38,7 +40,7 @@ namespace Core
 
         // Check if there's a root object
         if (!doc.isObject())
-            return std::unexpected(JsonError{ JsonErrorCode::RootObjectNotFound, "No root object found" });
+            return std::unexpected(JsonError{ JsonErrorCode::RootObjectNotFound, "no root object found!" });
 
         // -- Basic product info --------------------
         const QJsonObject rootObj = doc.object();
@@ -50,7 +52,7 @@ namespace Core
             if (!rootObj.contains(key))
                 return std::unexpected(JsonError{ 
                     JsonErrorCode::KeyNotFound, 
-                    QString("'%1' key not found").arg(key) 
+                    QString("'%1' key not found!").arg(key) 
                 });
 
             // Check values types
@@ -58,26 +60,38 @@ namespace Core
             if (value.type() != field.expectedType)
                 return std::unexpected(JsonError{ 
                     JsonErrorCode::InvalidValueType,
-                    QString("'%1' key value has invalid type").arg(key)
+                    QString("'%1' key value has invalid type!").arg(key)
                 });
         }
         // compare_at_price is optional in terms of type (double or null),
         // so it is validated separately from the fields with a single expected type.
         if (!rootObj.contains("compare_at_price"))
-            return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'compare_at_price' key not found" });
+            return std::unexpected(JsonError{ JsonErrorCode::KeyNotFound, "'compare_at_price' key not found!" });
 
         const QString name = rootObj.value("title").toString();
         const int currentPrice = rootObj.value("price").toInt();
         const bool available = rootObj.value("available").toBool();
-        const QString url = rootObj.value("url").toString();
-
-        // Images URLs
+        const QUrl url = QUrl(rootObj.value("url").toString());
         const QJsonArray imagesUrlsArray = rootObj.value("images").toArray();
-        QStringList imageUrls;
+
+        // Validate URLs
+        if (!url.isValid())
+            return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, "specified URL is invalid!" });
+
+        QList<QUrl> imageUrls;
         imageUrls.reserve(imagesUrlsArray.size());
         for (const QJsonValue& value : imagesUrlsArray) {
-            if (value.isString())
-                imageUrls.append(value.toString());
+            if (!value.isString())
+                return std::unexpected(JsonError{
+                    JsonErrorCode::InvalidValueType,
+                    "one of imagesUrlsArray values has invalid type!"
+                    });
+
+            QUrl url = QUrl(value.toString());
+            if (!url.isValid())
+                return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, QString("specified image URL is invalid:\n%1").arg(url.toString()) });
+
+            imageUrls.append(url);
         }
 
         qDebug() << "Parsed product from JSON";

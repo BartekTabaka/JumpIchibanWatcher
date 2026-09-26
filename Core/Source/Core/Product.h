@@ -3,14 +3,14 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
-//#include <QUrl>
+#include <QUrl>
 
 namespace Core
 {
 	class Product {
 	public:
-		Product(const QString& name, int currentPrice, bool available, const QString& url,
-			const QStringList& imageUrls, std::optional<int> regularPrice = std::nullopt);
+		Product(const QString& name, int currentPrice, bool available, const QUrl& url,
+			const QList<QUrl>& imageUrls, std::optional<int> regularPrice = std::nullopt);
 
 		// Getters
 		QString name() const;
@@ -18,15 +18,15 @@ namespace Core
 		bool onSale() const;
 		int regularPrice() const;
 		bool available() const;
-		QString url() const;
-		QStringList imageUrls() const;
+		QUrl url() const;
+		QList<QUrl> imageUrls() const;
 	private:
 		QString m_Name;
 		int m_CurrentPrice; // in cents
 		bool m_OnSale = false;
 		int m_RegularPrice; // in cents
 		bool m_Available;
-		QString m_Url;
-		QStringList m_ImageUrls;
+		QUrl m_Url;
+		QList<QUrl> m_ImageUrls;
 	};
 }

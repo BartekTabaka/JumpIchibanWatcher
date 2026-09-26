@@ -3,8 +3,8 @@
 #include <optional>
 #include <QDebug>
 
-Core::Product::Product(const QString& name, int currentPrice, bool available, const QString& url, 
-				 const QStringList& imageUrls, std::optional<int> regularPrice)
+Core::Product::Product(const QString& name, int currentPrice, bool available, const QUrl& url, 
+				 const QList<QUrl>& imageUrls, std::optional<int> regularPrice)
 	: m_Name(name), m_CurrentPrice(currentPrice), m_Available(available), m_Url(url),
 	  m_ImageUrls(imageUrls)
 {
@@ -54,12 +54,12 @@ bool Core::Product::available() const
 	return m_Available;
 }
 
-QString Core::Product::url() const
+QUrl Core::Product::url() const
 {
 	return m_Url;
 }
 
-QStringList Core::Product::imageUrls() const
+QList<QUrl> Core::Product::imageUrls() const
 {
 	return m_ImageUrls;
 }

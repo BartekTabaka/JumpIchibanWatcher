@@ -4,10 +4,12 @@
 #include <expected>
 #include <QDebug>
 #include <QFile>
+#include <QList>
 #include <QMetaType>
 #include <QSettings>
 #include <QString>
 #include <QStringView>
+#include <QUrl>
 #include "AppIdentity.h"
 #include "Core/Product.h"
 
@@ -48,17 +50,18 @@ namespace
 std::expected<Core::Product, SettingsError> Settings::loadLastProduct()
 {
     const QSettings settings = MakeSettings();
+    constexpr SettingsOperation operation = SettingsOperation::Loading;
 
     if (!QFile::exists(settings.fileName()))
-        return std::unexpected(SettingsError{ SettingsErrorCode::FileNotFound, "Config file not found!" });
+        return std::unexpected(SettingsError{ operation, SettingsErrorCode::FileNotFound, "Config file not found!" });
 
     switch (settings.status()) {
         case QSettings::NoError:
             break;
         case QSettings::FormatError:
-            return std::unexpected(SettingsError{ SettingsErrorCode::InvalidFormat, "Config file is in wrong format!" });
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidFormat, "Config file is in wrong format!" });
         case QSettings::AccessError:
-            return std::unexpected(SettingsError{ SettingsErrorCode::CannotOpenFile, "Couldn't open config file!" });
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::CannotOpenFile, "Couldn't open config file!" });
     }
 
     // Check if all the values exist and are proper type
@@ -66,34 +69,51 @@ std::expected<Core::Product, SettingsError> Settings::loadLastProduct()
         const QString key = field.key.toString();
         const QString fullKey = FullKey(key);
         if (!settings.contains(fullKey))
-            return std::unexpected(SettingsError{ SettingsErrorCode::MissingValue, QString("'%1' key not found in last product info!").arg(key)});
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::MissingValue, QString("'%1' key not found in last product info!").arg(key)});
 
         // TODO: Validate value types (#1)
         //  - value.typeId() doesn't work
         // qDebug() << "Expected type:" << field.expectedType << "got:" << value.typeId();
     }
     
+    // -- Read variables ------------
     const QString name          = settings.value(FullKey(u"name")).toString();
     const int currentPrice      = settings.value(FullKey(u"currentPrice")).toInt();
     const bool available        = settings.value(FullKey(u"available")).toBool();
-    const QString url           = settings.value(FullKey(u"url")).toString();
+    const QString urlString     = settings.value(FullKey(u"url")).toString();
 
-    const QStringList imageUrls = settings.value(FullKey(u"imageUrls")).toStringList();
-    if (imageUrls.isEmpty())
-        return std::unexpected(SettingsError{ SettingsErrorCode::MissingValue, "'imageUrls' list is empty!" });
+    const QStringList imageUrlsStrings = settings.value(FullKey(u"imageUrls")).toStringList();
+    if (imageUrlsStrings.isEmpty())
+        return std::unexpected(SettingsError{ operation, SettingsErrorCode::MissingValue, "'imageUrls' list is empty!" });
 
+    // Validate URLs
+    const QUrl urlConverted = QUrl(urlString);
+    if (!urlConverted.isValid())
+        return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidValue, "specified URL is invalid!" });
+    // -- FOR DEBUGGING ------------
+    else
+        qDebug() << urlConverted.toString();
+
+    const QList<QUrl> imageUrlsConverted = QUrl::fromStringList(imageUrlsStrings);
+    for (const QUrl& url : imageUrlsConverted) {
+        if (!url.isValid())
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidValue, QString("specified URL on image list is invalid:\n%1").arg(url.toString()) });
+    }
+
+    // Check for sale
     const bool onSale = settings.value(FullKey(u"onSale")).toBool();
     if (onSale) {
         const int regularPrice = settings.value(FullKey(u"regularPrice")).toInt();
-        return Core::Product(name, currentPrice, available, url, imageUrls, regularPrice);
+        return Core::Product(name, currentPrice, available, urlConverted, imageUrlsConverted, regularPrice);
     }
 
-    return Core::Product(name, currentPrice, available, url, imageUrls);
+    return Core::Product(name, currentPrice, available, urlConverted, imageUrlsConverted);
 }
 
 std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& product)
 {
     QSettings settings = MakeSettings();
+    constexpr SettingsOperation operation = SettingsOperation::Saving;
 
     if (!QFile::exists(settings.fileName()))
         qWarning() << "Settings file was not found! Creating new one!";
@@ -102,9 +122,9 @@ std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& pr
         case QSettings::NoError:
             break;
         case QSettings::FormatError:
-            return std::unexpected(SettingsError{ SettingsErrorCode::InvalidFormat, "Config file is in wrong format!" });
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidFormat, "Config file is in wrong format!" });
         case QSettings::AccessError:
-            return std::unexpected(SettingsError{ SettingsErrorCode::CannotOpenFile, "Couldn't open config file!" });
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::CannotOpenFile, "Couldn't open config file!" });
     }
 
     settings.beginGroup(kLastProductKey);
@@ -116,16 +136,16 @@ std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& pr
     settings.setValue("regularPrice", product.regularPrice());
     settings.setValue("available", product.available());
     settings.setValue("url", product.url());
-    settings.setValue("imageUrls", product.imageUrls());
+    settings.setValue("imageUrls", QUrl::toStringList(product.imageUrls()));
 
     settings.endGroup();
     settings.sync();
 
     switch (settings.status()) {
         case QSettings::FormatError:
-            return std::unexpected(SettingsError{ SettingsErrorCode::InvalidFormat, "Config file is in wrong format!" });
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidFormat, "Config file is in wrong format!" });
         case QSettings::AccessError:
-            return std::unexpected(SettingsError{ SettingsErrorCode::CannotOpenFile, "Couldn't open config file!" });
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::CannotOpenFile, "Couldn't open config file!" });
     }
     return {};
 
