@@ -87,11 +87,11 @@ namespace Core
                     "one of imagesUrlsArray values has invalid type!"
                     });
 
-            QUrl url = QUrl(value.toString());
-            if (!url.isValid())
-                return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, QString("specified image URL is invalid:\n%1").arg(url.toString()) });
+            QUrl imageUrl = QUrl(value.toString());
+            if (!imageUrl.isValid())
+                return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, QString("specified image URL is invalid:\n%1").arg(imageUrl.toString()) });
 
-            imageUrls.append(url);
+            imageUrls.append(imageUrl);
         }
 
         qDebug() << "Parsed product from JSON";
