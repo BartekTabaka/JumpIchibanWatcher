@@ -25,11 +25,20 @@ namespace
         { u"url",       QJsonValue::String },
         { u"images",    QJsonValue::Array },
     } };
+
+    QString constructInvalidUrlErrorMessage(const QUrl& url)
+    {
+        QString message;
+        if (url.isEmpty()) message = "specified URL is empty!";
+        else               message = QString("specified URL is invalid! Error: %1").arg(url.errorString());
+
+        return message;
+    }
 } // namespace
 
 namespace Core
 {
-    std::expected<Product, JsonError> mapToProduct(const QByteArray& fetchedContent)
+    std::expected<Product, JsonError> mapToProduct(const QByteArray& fetchedContent, const QUrl& baseUrl)
     {
         QJsonParseError parseError;
         const QJsonDocument doc = QJsonDocument::fromJson(fetchedContent, &parseError);
@@ -71,12 +80,13 @@ namespace Core
         const QString name = rootObj.value("title").toString();
         const int currentPrice = rootObj.value("price").toInt();
         const bool available = rootObj.value("available").toBool();
-        const QUrl url = QUrl(rootObj.value("url").toString());
+        const QUrl rawUrl = QUrl(rootObj.value("url").toString());
         const QJsonArray imagesUrlsArray = rootObj.value("images").toArray();
 
         // Validate URLs
-        if (!url.isValid())
-            return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, "specified URL is invalid!" });
+        if (!rawUrl.isValid())
+            return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, constructInvalidUrlErrorMessage(rawUrl) });
+        const QUrl fullUrl = baseUrl.resolved(rawUrl);
 
         QList<QUrl> imageUrls;
         imageUrls.reserve(imagesUrlsArray.size());
@@ -85,13 +95,13 @@ namespace Core
                 return std::unexpected(JsonError{
                     JsonErrorCode::InvalidValueType,
                     "one of imagesUrlsArray values has invalid type!"
-                    });
+                });
 
-            QUrl imageUrl = QUrl(value.toString());
-            if (!imageUrl.isValid())
-                return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, QString("specified image URL is invalid:\n%1").arg(imageUrl.toString()) });
+            const QUrl rawImageUrl = QUrl(value.toString());
+            if (!rawImageUrl.isValid())
+                return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, constructInvalidUrlErrorMessage(rawImageUrl) });
 
-            imageUrls.append(imageUrl);
+            imageUrls.append(baseUrl.resolved(rawImageUrl));
         }
 
         qDebug() << "Parsed product from JSON";
@@ -102,9 +112,9 @@ namespace Core
         if (compareAtPrice.isDouble()) { // isNull would return also if the key doesn't exist
                                          // isDouble catches only true numbers
             const int regularPrice = compareAtPrice.toInt();
-            return Product(name, currentPrice, available, url, imageUrls, regularPrice);
+            return Product(name, currentPrice, available, fullUrl, imageUrls, regularPrice);
         }
 
-        return Product(name, currentPrice, available, url, imageUrls);
+        return Product(name, currentPrice, available, fullUrl, imageUrls);
     }
 } // namespace Core

@@ -30,12 +30,12 @@ namespace
 		dbg << label << value;
 	}
 
+	const QUrl kShopBaseUrl("https://jumpichiban.com");
+
 	// Helper for now
 	QUrl getUrl()
 	{
-		QUrl url;
-		url.setScheme("https");
-		url.setHost("jumpichiban.com");
+		QUrl url = kShopBaseUrl;
 		url.setPath("/products/ichiban-kuji-my-dress-up-darling-season-2-last-one-prize-marin-kitagawa-artscale-memoria-figure");
 		// The user will simply copy and paste the url of HTML site, '.js' will be added inside the NetworkManager class
 
@@ -86,7 +86,7 @@ void App::refreshProduct()
 	}
 
 	// NOTE: fetchedContent.value() == *fetchedContent
-	auto mappingResult = Core::mapToProduct(*fetchedContent);
+	auto mappingResult = Core::mapToProduct(*fetchedContent, kShopBaseUrl);
 	if (!mappingResult) {
 		qCritical() << mappingResult.error();
 		return;

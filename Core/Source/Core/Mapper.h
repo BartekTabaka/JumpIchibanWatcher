@@ -3,6 +3,7 @@
 #include <QByteArray>
 #include <QDebug>
 #include <QString>
+#include <QUrl>
 #include "Product.h"
 
 namespace Core
@@ -41,5 +42,5 @@ namespace Core
 		}
 	};
 
-	std::expected<Product, JsonError> mapToProduct(const QByteArray& fetchedContent);
+	std::expected<Product, JsonError> mapToProduct(const QByteArray& fetchedContent, const QUrl& baseUrl);
 }

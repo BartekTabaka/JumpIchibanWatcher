@@ -45,6 +45,12 @@ namespace
         { u"url",          QMetaType::QString },
         { u"imageUrls",    QMetaType::QStringList }
     } };
+
+    bool isCompleteUrl(const QUrl& url)
+    {
+        if (!url.isValid() || url.scheme().isEmpty() || url.host().isEmpty()) return false;
+        else return true;
+    }
 } // namespace
 
 std::expected<Core::Product, SettingsError> Settings::loadLastProduct()
@@ -77,37 +83,33 @@ std::expected<Core::Product, SettingsError> Settings::loadLastProduct()
     }
     
     // -- Read variables ------------
-    const QString name          = settings.value(FullKey(u"name")).toString();
-    const int currentPrice      = settings.value(FullKey(u"currentPrice")).toInt();
-    const bool available        = settings.value(FullKey(u"available")).toBool();
-    const QString urlString     = settings.value(FullKey(u"url")).toString();
+    const QString name     = settings.value(FullKey(u"name")).toString();
+    const int currentPrice = settings.value(FullKey(u"currentPrice")).toInt();
+    const bool available   = settings.value(FullKey(u"available")).toBool();
+    const QUrl url         = QUrl(settings.value(FullKey(u"url")).toString());
 
     const QStringList imageUrlsStrings = settings.value(FullKey(u"imageUrls")).toStringList();
     if (imageUrlsStrings.isEmpty())
         return std::unexpected(SettingsError{ operation, SettingsErrorCode::MissingValue, "'imageUrls' list is empty!" });
 
     // Validate URLs
-    const QUrl urlConverted = QUrl(urlString);
-    if (!urlConverted.isValid())
-        return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidValue, "specified URL is invalid!" });
-    // -- FOR DEBUGGING ------------
-    else
-        qDebug() << urlConverted.toString();
+    if (!isCompleteUrl(url))
+        return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidValue, QString("specified URL is invalid: \"%1\"").arg(url.toString()) });
 
     const QList<QUrl> imageUrlsConverted = QUrl::fromStringList(imageUrlsStrings);
-    for (const QUrl& url : imageUrlsConverted) {
-        if (!url.isValid())
-            return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidValue, QString("specified URL on image list is invalid:\n%1").arg(url.toString()) });
+    for (const QUrl& imageUrl : imageUrlsConverted) {
+        if (!isCompleteUrl(imageUrl))
+            return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidValue, QString("specified URL on image list is invalid: \"%1\"").arg(imageUrl.toString()) });
     }
 
     // Check for sale
     const bool onSale = settings.value(FullKey(u"onSale")).toBool();
     if (onSale) {
         const int regularPrice = settings.value(FullKey(u"regularPrice")).toInt();
-        return Core::Product(name, currentPrice, available, urlConverted, imageUrlsConverted, regularPrice);
+        return Core::Product(name, currentPrice, available, url, imageUrlsConverted, regularPrice);
     }
 
-    return Core::Product(name, currentPrice, available, urlConverted, imageUrlsConverted);
+    return Core::Product(name, currentPrice, available, url, imageUrlsConverted);
 }
 
 std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& product)
@@ -117,6 +119,18 @@ std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& pr
 
     if (!QFile::exists(settings.fileName()))
         qWarning() << "Settings file was not found! Creating new one!";
+
+    //////////////////////////////////////////////////////////////////////////////////
+    //                                                                              //
+    //  We check status() twice because we are answering two different questions    //
+    //  at two different points in time: the first switch (before writing) catches  //
+    //  problems that already existed (e.g. a corrupted/inaccessible file found     //
+    //  when opening it). The second switch (after sync()) catches problems with    //
+    //  the actual write that just happened (e.g. running out of disk space,        //
+    //  permissions being lost in the meantime) - the first check could not detect  //
+    //  these because the write had not happened yet at that point.                 //
+    //                                                                              //
+    //////////////////////////////////////////////////////////////////////////////////
 
     switch (settings.status()) {
         case QSettings::NoError:
@@ -142,22 +156,12 @@ std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& pr
     settings.sync();
 
     switch (settings.status()) {
+        case QSettings::NoError:
+            break;
         case QSettings::FormatError:
             return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidFormat, "Config file is in wrong format!" });
         case QSettings::AccessError:
             return std::unexpected(SettingsError{ operation, SettingsErrorCode::CannotOpenFile, "Couldn't open config file!" });
     }
     return {};
-
-    //////////////////////////////////////////////////////////////////////////////////
-    //                                                                              //
-    //  We check status() twice because we are answering two different questions    //
-    //  at two different points in time: the first switch (before writing) catches  //
-    //  problems that already existed (e.g. a corrupted/inaccessible file found     //
-    //  when opening it). The second switch (after sync()) catches problems with    //
-    //  the actual write that just happened (e.g. running out of disk space,        //
-    //  permissions being lost in the meantime) - the first check could not detect  //
-    //  these because the write had not happened yet at that point.                 //
-    //                                                                              //
-    //////////////////////////////////////////////////////////////////////////////////
 }
