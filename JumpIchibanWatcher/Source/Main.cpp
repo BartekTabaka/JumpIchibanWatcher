@@ -8,8 +8,7 @@ int main(int argc, char *argv[])
 
     g_App = &logic;
 
-    g_App->refreshProduct();
-    g_App->compareProducts();
+    g_App->run();
 
     return app.exec();
 }

@@ -17,6 +17,8 @@ class App : public QObject {
 public:
 	explicit App(QApplication& app);
 
+	void run();
+private:
 	void refreshProduct();
 	void showProductInfo();
 
@@ -24,7 +26,6 @@ public:
 	// in console, might become a different type when
 	// connecting the program with QML / QtWidgets
 	void compareProducts();
-private:
 	void commitNewProduct();
 private:
 	QApplication& m_App;

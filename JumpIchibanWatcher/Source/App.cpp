@@ -68,6 +68,12 @@ App::App(QApplication& app) : m_App(app),
 	qDebug() << "-----------------------";
 }
 
+void App::run()
+{
+	refreshProduct();
+	compareProducts();
+}
+
 void App::refreshProduct()
 {
 	////////////////////////////////////////////////////////////////////////////////////
@@ -85,6 +91,9 @@ void App::refreshProduct()
 		return;
 	}
 
+	qDebug() << "App received Product";
+	qDebug() << "-----------------------";
+
 	// NOTE: fetchedContent.value() == *fetchedContent
 	auto mappingResult = Core::mapToProduct(*fetchedContent, kShopBaseUrl);
 	if (!mappingResult) {
@@ -93,9 +102,6 @@ void App::refreshProduct()
 	}
 
 	m_NewProduct = std::move(*mappingResult);
-
-	qDebug() << "App received Product";
-	qDebug() << "-----------------------";
 
 	auto savingResult = Settings::saveProduct(*m_NewProduct);
 	if (!savingResult) {

@@ -163,5 +163,8 @@ std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& pr
         case QSettings::AccessError:
             return std::unexpected(SettingsError{ operation, SettingsErrorCode::CannotOpenFile, "Couldn't open config file!" });
     }
+
+    qDebug() << "Product saved successfully!";
+    qDebug() << "-----------------------";
     return {};
 }
