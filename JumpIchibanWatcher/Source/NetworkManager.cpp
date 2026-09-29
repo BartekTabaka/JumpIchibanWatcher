@@ -6,12 +6,18 @@
 #include <QEventLoop>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QObject>
 #include <QString>
 #include <QUrl>
 
+namespace
+{
+	constexpr int kTransferTimeout = 15000; // 15s
+}
+
 NetworkManager::NetworkManager()
 {
-	m_NetworkManager.setTransferTimeout(15000); // 15s
+	m_NetworkManager.setTransferTimeout(kTransferTimeout);
 }
 
 std::expected<QByteArray, QString> NetworkManager::fetchProductJson(const QUrl& url)
@@ -19,8 +25,6 @@ std::expected<QByteArray, QString> NetworkManager::fetchProductJson(const QUrl& 
 	// Modify URL
 	QUrl targetUrl = url;
 	targetUrl.setPath(targetUrl.path() + ".js");
-	//qDebug() << "Modified URL:" << targetUrl.toString();
-	//qDebug() << "-----------------------";
 
 	// Request and headers
 	QNetworkRequest request(targetUrl);
@@ -32,6 +36,7 @@ std::expected<QByteArray, QString> NetworkManager::fetchProductJson(const QUrl& 
 
 	// Reply
 	QNetworkReply *reply = m_NetworkManager.get(request);
+	m_PendingReply = reply;
 
 	// Event loop
 	QEventLoop eventLoop;
@@ -42,6 +47,7 @@ std::expected<QByteArray, QString> NetworkManager::fetchProductJson(const QUrl& 
 	// Success
 	if (reply->error() == QNetworkReply::NoError && httpStatus == 200) {
 		const QByteArray data = reply->readAll();
+		m_PendingReply.clear();
 		reply->deleteLater();
 		return data;
 	}
@@ -56,6 +62,12 @@ std::expected<QByteArray, QString> NetworkManager::fetchProductJson(const QUrl& 
 		qWarning() << "Something went wrong:" << reply->errorString() << "HTTP" << httpStatus;
 	}
 
+	m_PendingReply.clear();
 	reply->deleteLater();
 	return std::unexpected(reply->errorString());
+}
+
+bool NetworkManager::isRequestPending() const
+{
+	return !m_PendingReply.isNull();
 }

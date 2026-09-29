@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <QObject>
+#include <QTimer>
 #include "Core/Mapper.h"
 #include "Core/Product.h"
 #include "NetworkManager.h"
@@ -38,4 +39,5 @@ private:
 	std::optional<Core::Product> m_NewProduct;
 
 	NetworkManager m_NetworkManager;
+	QTimer m_Timer;
 };

@@ -64,6 +64,10 @@ App::App(QApplication& app) : m_App(app),
 	else
 		qDebug() << "Loaded last product info from settings";
 
+	// 10s for debugging purposes, 2mins minimum should be good in release version
+	m_Timer.setInterval(10000); // 10s
+	m_Timer.callOnTimeout(this, &App::executeWorkflow);
+
 	qDebug() << "The app is working!";
 	qDebug() << "-----------------------";
 }
@@ -71,10 +75,16 @@ App::App(QApplication& app) : m_App(app),
 void App::run()
 {
 	executeWorkflow();
+	m_Timer.start();
 }
 
 void App::executeWorkflow()
 {
+	if (m_NetworkManager.isRequestPending()) {
+		qDebug() << "Previous cycle didn't finish yet - skipping this cycle";
+		return;
+	}
+
 	refreshProduct();
 	compareProducts();
 	commitNewProduct();
@@ -97,7 +107,7 @@ void App::refreshProduct()
 		return;
 	}
 
-	qDebug() << "App received Product";
+	qDebug() << "App fetched raw content";
 	qDebug() << "-----------------------";
 
 	// NOTE: fetchedContent.value() == *fetchedContent
