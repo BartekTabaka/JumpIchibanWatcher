@@ -70,8 +70,14 @@ App::App(QApplication& app) : m_App(app),
 
 void App::run()
 {
+	executeWorkflow();
+}
+
+void App::executeWorkflow()
+{
 	refreshProduct();
 	compareProducts();
+	commitNewProduct();
 }
 
 void App::refreshProduct()
@@ -128,7 +134,6 @@ void App::showProductInfo()
 	qDebug() << "-----------------------";
 }
 
-// NOTE: Before every return we must commitNewProduct() - except when m_NewProduct is std::nullopt
 void App::compareProducts()
 {
 	if (!m_NewProduct) {
@@ -157,8 +162,8 @@ void App::compareProducts()
 			logPrice("Regular price:", price(newProduct.regularPrice()));
 		}
 		logPrice("Current price:", price(newProduct.currentPrice()));
+		qDebug() << "-----------------------";
 
-		commitNewProduct();
 		return;
 	}
 
@@ -188,8 +193,8 @@ void App::compareProducts()
 			qDebug() << "Product is no longer available";
 		else
 			qDebug() << "Product is still not available";
+		qDebug() << "-----------------------";
 
-		commitNewProduct();
 		return;
 	}
 	else {
@@ -239,11 +244,13 @@ void App::compareProducts()
 	const QUrl newUrl = newProduct.url();
 	if (newUrl != oldUrl) qWarning() << "Product's URL has changed";
 
-	commitNewProduct();
+	qDebug() << "-----------------------";
 }
 
 void App::commitNewProduct()
 {
+	if (!m_NewProduct) return;
+
 	m_LastProduct = m_NewProduct.value();
 	m_NewProduct = std::nullopt;
 }

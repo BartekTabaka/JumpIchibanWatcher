@@ -17,8 +17,12 @@ class App : public QObject {
 public:
 	explicit App(QApplication& app);
 
+	// Starts the main application workflow.
 	void run();
 private:
+	// Executes the main application workflow
+	void executeWorkflow();
+
 	void refreshProduct();
 	void showProductInfo();
 
