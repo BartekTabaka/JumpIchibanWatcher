@@ -101,7 +101,11 @@ void App::refreshProduct()
 	//																				  //
 	////////////////////////////////////////////////////////////////////////////////////
 
-	auto fetchedContent = m_NetworkManager.fetchProductJson(getUrl());
+	// Modify URL
+	QUrl targetUrl = getUrl();
+	targetUrl.setPath(targetUrl.path() + ".js");
+	
+	auto fetchedContent = m_NetworkManager.fetchProductJson(targetUrl);
 	if (!fetchedContent) {
 		qCritical() << "Fetching error:" << fetchedContent.error();
 		return;

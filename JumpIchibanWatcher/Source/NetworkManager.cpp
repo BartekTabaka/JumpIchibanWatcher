@@ -22,12 +22,11 @@ NetworkManager::NetworkManager()
 
 std::expected<QByteArray, QString> NetworkManager::fetchProductJson(const QUrl& url)
 {
-	// Modify URL
-	QUrl targetUrl = url;
-	targetUrl.setPath(targetUrl.path() + ".js");
+	if (!url.isValid() || url.scheme().isEmpty() || url.host().isEmpty())
+		return "Entered URL is invalid!"; // Later: std::unexpected
 
 	// Request and headers
-	QNetworkRequest request(targetUrl);
+	QNetworkRequest request(url);
 	request.setHeader(QNetworkRequest::UserAgentHeader,
 		QByteArray("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
 				   "AppleWebKit/537.36 (KHTML, like Gecko) "
