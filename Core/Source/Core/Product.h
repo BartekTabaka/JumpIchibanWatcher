@@ -10,7 +10,7 @@ namespace Core
 	class Product {
 	public:
 		Product(const QString& name, int currentPrice, bool available, const QUrl& url,
-			const QList<QUrl>& imageUrls, std::optional<int> regularPrice = std::nullopt);
+			const QList<QUrl>& imageUrls, const QUrl& featuredImageUrl, std::optional<int> regularPrice = std::nullopt);
 
 		// Getters
 		QString name() const;
@@ -20,6 +20,7 @@ namespace Core
 		bool available() const;
 		QUrl url() const;
 		QList<QUrl> imageUrls() const;
+		QUrl featuredImageUrl() const;
 	private:
 		QString m_Name;
 		int m_CurrentPrice; // in cents
@@ -28,5 +29,6 @@ namespace Core
 		bool m_Available;
 		QUrl m_Url;
 		QList<QUrl> m_ImageUrls;
+		QUrl m_FeaturedImageUrl;
 	};
 }

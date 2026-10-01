@@ -13,7 +13,7 @@ class NetworkManager : public QObject {
 public:
 	NetworkManager();
 
-	std::expected<QByteArray, QString> fetchProductJson(const QUrl& url);
+	std::expected<QByteArray, QString> fetchData(const QUrl& url);
 
 	bool isRequestPending() const;
 	// TODO: can add some error handling functions like retry fetch, if rate limit has been met

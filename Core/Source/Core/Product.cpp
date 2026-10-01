@@ -4,9 +4,9 @@
 #include <QDebug>
 
 Core::Product::Product(const QString& name, int currentPrice, bool available, const QUrl& url, 
-				 const QList<QUrl>& imageUrls, std::optional<int> regularPrice)
+				 const QList<QUrl>& imageUrls, const QUrl& featuredImageUrl, std::optional<int> regularPrice)
 	: m_Name(name), m_CurrentPrice(currentPrice), m_Available(available), m_Url(url),
-	  m_ImageUrls(imageUrls)
+	  m_ImageUrls(imageUrls), m_FeaturedImageUrl(featuredImageUrl)
 {
 	if (regularPrice) {
 		m_OnSale = true;
@@ -49,4 +49,9 @@ QUrl Core::Product::url() const
 QList<QUrl> Core::Product::imageUrls() const
 {
 	return m_ImageUrls;
+}
+
+QUrl Core::Product::featuredImageUrl() const
+{
+	return m_FeaturedImageUrl;
 }

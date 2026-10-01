@@ -20,7 +20,7 @@ NetworkManager::NetworkManager()
 	m_NetworkManager.setTransferTimeout(kTransferTimeout);
 }
 
-std::expected<QByteArray, QString> NetworkManager::fetchProductJson(const QUrl& url)
+std::expected<QByteArray, QString> NetworkManager::fetchData(const QUrl& url)
 {
 	if (!url.isValid() || url.scheme().isEmpty() || url.host().isEmpty())
 		return "Entered URL is invalid!"; // Later: std::unexpected

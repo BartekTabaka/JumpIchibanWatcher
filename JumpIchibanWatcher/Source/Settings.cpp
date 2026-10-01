@@ -12,6 +12,7 @@
 #include <QUrl>
 #include "AppIdentity.h"
 #include "Core/Product.h"
+#include "Core/UrlValidation.h"
 
 namespace
 {
@@ -36,21 +37,16 @@ namespace
         QMetaType::Type expectedType;
     };
 
-    constexpr std::array<ProductField, 7> expectedValues{ {
-        { u"name",         QMetaType::QString },
-        { u"currentPrice", QMetaType::Int },
-        { u"onSale",       QMetaType::Bool },
-        { u"regularPrice", QMetaType::Int },
-        { u"available",    QMetaType::Bool },
-        { u"url",          QMetaType::QString },
-        { u"imageUrls",    QMetaType::QStringList }
+    constexpr std::array<ProductField, 8> expectedValues{ {
+        { u"name",             QMetaType::QString },
+        { u"currentPrice",     QMetaType::Int },
+        { u"onSale",           QMetaType::Bool },
+        { u"regularPrice",     QMetaType::Int },
+        { u"available",        QMetaType::Bool },
+        { u"url",              QMetaType::QString },
+        { u"imageUrls",        QMetaType::QStringList },
+        { u"featuredImageUrl", QMetaType::QString }
     } };
-
-    bool isCompleteUrl(const QUrl& url)
-    {
-        if (!url.isValid() || url.scheme().isEmpty() || url.host().isEmpty()) return false;
-        else return true;
-    }
 } // namespace
 
 std::expected<Core::Product, SettingsError> Settings::loadLastProduct()
@@ -83,10 +79,11 @@ std::expected<Core::Product, SettingsError> Settings::loadLastProduct()
     }
     
     // -- Read variables ------------
-    const QString name     = settings.value(FullKey(u"name")).toString();
-    const int currentPrice = settings.value(FullKey(u"currentPrice")).toInt();
-    const bool available   = settings.value(FullKey(u"available")).toBool();
-    const QUrl url         = QUrl(settings.value(FullKey(u"url")).toString());
+    const QString name          = settings.value(FullKey(u"name")).toString();
+    const int currentPrice      = settings.value(FullKey(u"currentPrice")).toInt();
+    const bool available        = settings.value(FullKey(u"available")).toBool();
+    const QUrl url              = QUrl(settings.value(FullKey(u"url")).toString());
+    const QUrl featuredImageUrl = QUrl(settings.value(FullKey(u"featuredImageUrl")).toString());
 
     const QStringList imageUrlsStrings = settings.value(FullKey(u"imageUrls")).toStringList();
     if (imageUrlsStrings.isEmpty())
@@ -95,6 +92,13 @@ std::expected<Core::Product, SettingsError> Settings::loadLastProduct()
     // Validate URLs
     if (!isCompleteUrl(url))
         return std::unexpected(SettingsError{ operation, SettingsErrorCode::InvalidValue, QString("specified URL is invalid: \"%1\"").arg(url.toString()) });
+
+    if (!isCompleteUrl(featuredImageUrl))
+        return std::unexpected(SettingsError{ 
+            operation, 
+            SettingsErrorCode::InvalidValue, 
+            QString("specified featured image URL is invalid: \"%1\"").arg(featuredImageUrl.toString()) 
+        });
 
     const QList<QUrl> imageUrlsConverted = QUrl::fromStringList(imageUrlsStrings);
     for (const QUrl& imageUrl : imageUrlsConverted) {
@@ -106,10 +110,10 @@ std::expected<Core::Product, SettingsError> Settings::loadLastProduct()
     const bool onSale = settings.value(FullKey(u"onSale")).toBool();
     if (onSale) {
         const int regularPrice = settings.value(FullKey(u"regularPrice")).toInt();
-        return Core::Product(name, currentPrice, available, url, imageUrlsConverted, regularPrice);
+        return Core::Product(name, currentPrice, available, url, imageUrlsConverted, featuredImageUrl, regularPrice);
     }
 
-    return Core::Product(name, currentPrice, available, url, imageUrlsConverted);
+    return Core::Product(name, currentPrice, available, url, imageUrlsConverted, featuredImageUrl);
 }
 
 std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& product)
@@ -151,6 +155,7 @@ std::expected<void, SettingsError> Settings::saveProduct(const Core::Product& pr
     settings.setValue("available", product.available());
     settings.setValue("url", product.url());
     settings.setValue("imageUrls", QUrl::toStringList(product.imageUrls()));
+    settings.setValue("featuredImageUrl", product.featuredImageUrl());
 
     settings.endGroup();
     settings.sync();

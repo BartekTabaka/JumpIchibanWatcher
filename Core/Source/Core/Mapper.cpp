@@ -10,6 +10,7 @@
 #include <QStringView>
 #include <QUrl>
 #include "Product.h"
+#include "UrlValidation.h"
 
 namespace
 {
@@ -18,12 +19,13 @@ namespace
         QJsonValue::Type expectedType;
     };
     
-    constexpr std::array<JsonField, 5> expectedFields { {
-        { u"title",     QJsonValue::String },
-        { u"price",     QJsonValue::Double },
-        { u"available", QJsonValue::Bool },
-        { u"url",       QJsonValue::String },
-        { u"images",    QJsonValue::Array },
+    constexpr std::array<JsonField, 6> expectedFields { {
+        { u"title",          QJsonValue::String },
+        { u"price",          QJsonValue::Double },
+        { u"available",      QJsonValue::Bool },
+        { u"url",            QJsonValue::String },
+        { u"images",         QJsonValue::Array },
+        { u"featured_image", QJsonValue::String }
     } };
 
     QString constructInvalidUrlErrorMessage(const QUrl& url)
@@ -82,11 +84,20 @@ namespace Core
         const bool available = rootObj.value("available").toBool();
         const QUrl rawUrl = QUrl(rootObj.value("url").toString());
         const QJsonArray imagesUrlsArray = rootObj.value("images").toArray();
+        const QUrl rawFeaturedImageUrl = QUrl(rootObj.value("featured_image").toString());
 
         // Validate URLs
         if (!rawUrl.isValid())
             return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, constructInvalidUrlErrorMessage(rawUrl) });
         const QUrl fullUrl = baseUrl.resolved(rawUrl);
+        if (!isCompleteUrl(fullUrl))
+            return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, constructInvalidUrlErrorMessage(fullUrl) });
+        
+        if (!rawFeaturedImageUrl.isValid())
+            return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, constructInvalidUrlErrorMessage(rawFeaturedImageUrl) });
+        const QUrl fullFeaturedImageUrl = baseUrl.resolved(rawFeaturedImageUrl);
+        if (!isCompleteUrl(fullFeaturedImageUrl))
+            return std::unexpected(JsonError{ JsonErrorCode::InvalidValue, constructInvalidUrlErrorMessage(fullFeaturedImageUrl) });
 
         QList<QUrl> imageUrls;
         imageUrls.reserve(imagesUrlsArray.size());
@@ -112,9 +123,9 @@ namespace Core
         if (compareAtPrice.isDouble()) { // isNull would return also if the key doesn't exist
                                          // isDouble catches only true numbers
             const int regularPrice = compareAtPrice.toInt();
-            return Product(name, currentPrice, available, fullUrl, imageUrls, regularPrice);
+            return Product(name, currentPrice, available, fullUrl, imageUrls, fullFeaturedImageUrl, regularPrice);
         }
 
-        return Product(name, currentPrice, available, fullUrl, imageUrls);
+        return Product(name, currentPrice, available, fullUrl, imageUrls, fullFeaturedImageUrl);
     }
 } // namespace Core

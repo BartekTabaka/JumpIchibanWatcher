@@ -7,6 +7,7 @@ set(SOURCES
     Source/Core/Product.cpp
     Source/Core/Mapper.h
     Source/Core/Mapper.cpp
+    Source/Core/UrlValidation.h
 )
 
 # Library definition    
