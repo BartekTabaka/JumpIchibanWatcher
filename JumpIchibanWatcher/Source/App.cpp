@@ -3,6 +3,8 @@
 #include <optional>
 #include <QApplication>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
 #include <QString>
 #include <QUrl>
 #include <utility>
@@ -78,6 +80,21 @@ void App::run()
 	m_Timer.start();
 }
 
+void App::downloadImages()
+{
+	if (!m_NewProduct) return;
+
+	const Core::Product& product = m_NewProduct.value();
+
+	saveImage(product.featuredImageUrl(), QDir::currentPath() + "/image_featured.png");
+
+	int imageIndex = 0;
+	for (const auto& url : product.imageUrls()) {
+		QString path = QDir::currentPath() + QString("/image_%1.png").arg(++imageIndex);
+		saveImage(url, path);
+	}
+}
+
 void App::executeWorkflow()
 {
 	if (m_NetworkManager.isRequestPending()) {
@@ -87,6 +104,8 @@ void App::executeWorkflow()
 
 	refreshProduct();
 	compareProducts();
+	downloadImages();
+
 	commitNewProduct();
 }
 
@@ -259,6 +278,29 @@ void App::compareProducts()
 	if (newUrl != oldUrl) qWarning() << "Product's URL has changed";
 
 	qDebug() << "-----------------------";
+}
+
+bool App::saveImage(const QUrl& url, const QString& path)
+{
+	if (path.isEmpty()) return false;
+
+	auto fetchingResult = m_NetworkManager.fetchData(url);
+	if (!fetchingResult) {
+		qCritical() << "Fetching error:" << fetchingResult.error();
+		return false;
+	}
+
+	QFile file(path);
+	if (!file.open(QIODevice::WriteOnly)) {
+		qDebug() << QString("Couldn't open image file (%1):").arg(path) << file.errorString();
+		return false;
+	}
+
+	file.write(*fetchingResult);
+	file.close();
+
+	qDebug() << "Saved image in:" << path;
+	return true;
 }
 
 void App::commitNewProduct()

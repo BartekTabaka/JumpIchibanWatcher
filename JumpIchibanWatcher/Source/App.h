@@ -3,7 +3,9 @@
 
 #include <optional>
 #include <QObject>
+#include <QString>
 #include <QTimer>
+#include <QUrl>
 #include "Core/Mapper.h"
 #include "Core/Product.h"
 #include "NetworkManager.h"
@@ -26,11 +28,16 @@ private:
 
 	void refreshProduct();
 	void showProductInfo();
+	void downloadImages();
 
 	// void for now, comparing results will be shown
 	// in console, might become a different type when
 	// connecting the program with QML / QtWidgets
 	void compareProducts();
+
+	// Temporarily saves an image to disk.
+	// This will be replaced with on-demand image fetching once the UI is implemented.
+	bool saveImage(const QUrl& url, const QString& path);
 	void commitNewProduct();
 private:
 	QApplication& m_App;
