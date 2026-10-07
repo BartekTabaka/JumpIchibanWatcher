@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QList>
 #include <QString>
 #include <QUrl>
 #include <utility>
@@ -104,7 +105,6 @@ void App::executeWorkflow()
 
 	refreshProduct();
 	compareProducts();
-	downloadImages();
 
 	commitNewProduct();
 }
@@ -283,9 +283,18 @@ void App::compareProducts()
 	}
 
 	// Url
-	const QUrl oldUrl = lastProduct.url();
-	const QUrl newUrl = newProduct.url();
-	if (newUrl != oldUrl) qWarning() << "Product's URL has changed";
+	if (newProduct.url() != lastProduct.url()) qWarning() << "Product's URL has changed";
+
+	// Image URLs
+	if (newProduct.featuredImageUrl() != lastProduct.featuredImageUrl()) \
+		downloadImages();
+
+	const QList<QUrl>& oldList = lastProduct.imageUrls();
+	const QList<QUrl>& newList = newProduct.imageUrls();
+	for (qsizetype i = 0; i < oldList.size() && i < newList.size(); ++i) {
+		if (newList[i] != oldList[i])
+			downloadImages();
+	}
 
 	qDebug() << "-----------------------";
 }
