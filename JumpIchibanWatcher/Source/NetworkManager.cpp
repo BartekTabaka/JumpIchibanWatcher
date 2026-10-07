@@ -9,18 +9,60 @@
 #include <QObject>
 #include <QString>
 #include <QUrl>
+#include <utility>
 
 namespace
 {
 	constexpr int kTransferTimeout = 15000; // 15s
-}
+
+	NetworkError makeNetworkError(QNetworkReply *reply)
+	{
+		const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+		const QString message = reply->errorString(); // code - HTTP code: x (MESSAGE)
+
+		// No HTTP response
+		switch (reply->error()) {
+			case QNetworkReply::TimeoutError:
+				return { NetworkErrorCode::Timeout, httpStatus, message };
+			case QNetworkReply::OperationCanceledError:
+				return { NetworkErrorCode::Cancelled, httpStatus, message };
+			case QNetworkReply::SslHandshakeFailedError:
+				return { NetworkErrorCode::SslError, httpStatus, message };
+			case QNetworkReply::ConnectionRefusedError:
+			case QNetworkReply::RemoteHostClosedError:
+			case QNetworkReply::HostNotFoundError:
+			case QNetworkReply::TemporaryNetworkFailureError:
+			case QNetworkReply::NetworkSessionFailedError:
+			case QNetworkReply::UnknownNetworkError:
+				return { NetworkErrorCode::ConnectionError, httpStatus, message };
+			default:
+				break;
+		}
+
+		// HTTP status
+		switch (httpStatus) {
+			case 404:
+				return { NetworkErrorCode::NotFound, httpStatus, message };
+			case 429:
+			case 503:
+				return { NetworkErrorCode::RateLimited, httpStatus, message };
+			default:
+				break;
+		}
+
+		if (httpStatus != 0)
+			return { NetworkErrorCode::HttpError, httpStatus, message };
+
+		return { NetworkErrorCode::Unknown, httpStatus, message };
+	}
+} // namespace
 
 NetworkManager::NetworkManager()
 {
 	m_NetworkManager.setTransferTimeout(kTransferTimeout);
 }
 
-std::expected<QByteArray, QString> NetworkManager::fetchData(const QUrl& url)
+std::expected<QByteArray, NetworkError> NetworkManager::fetchData(const QUrl& url)
 {
 	if (!url.isValid() || url.scheme().isEmpty() || url.host().isEmpty())
 		return "Entered URL is invalid!"; // Later: std::unexpected
@@ -42,28 +84,22 @@ std::expected<QByteArray, QString> NetworkManager::fetchData(const QUrl& url)
 	QObject::connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
 	eventLoop.exec();
 
+	std::expected<QByteArray, NetworkError> result;
 	const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
 	// Success
 	if (reply->error() == QNetworkReply::NoError && httpStatus == 200) {
-		const QByteArray data = reply->readAll();
-		m_PendingReply.clear();
-		reply->deleteLater();
-		return data;
+		result = reply->readAll();
 	}
-	// Errors
-	else if (httpStatus == 404) {
-		qWarning() << "Product doesn't exist";
-	}
-	else if (httpStatus == 429 || httpStatus == 503) {
-		qWarning() << "Rate limit, code:" << httpStatus << "- slow down!";
-	}
+	// Error
 	else {
-		qWarning() << "Something went wrong:" << reply->errorString() << "HTTP" << httpStatus;
+		NetworkError error = makeNetworkError(reply);
+		result = std::unexpected(std::move(error));
 	}
 
 	m_PendingReply.clear();
 	reply->deleteLater();
-	return std::unexpected(reply->errorString());
+	return result;
 }
 
 bool NetworkManager::isRequestPending() const

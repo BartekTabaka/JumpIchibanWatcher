@@ -24,7 +24,9 @@ namespace Core
 
 		friend QDebug operator<<(QDebug debug, JsonError error)
 		{
-			debug << "JsonError:";
+			QDebugStateSaver saver(debug);
+
+			debug.noquote() << "JsonError:";
 			switch (error.code) {
 			case JsonErrorCode::ParseError:         debug << "parsing error"; break;
 			case JsonErrorCode::RootObjectNotFound: debug << "root object not found"; break;
@@ -34,8 +36,7 @@ namespace Core
 			default:                                debug << "something went wrong - unknown error"; break;
 			}
 			if (!error.message.isEmpty()) {
-				QDebugStateSaver saver(debug);
-				debug.noquote() << '(' + error.message + ')';
+				debug << '(' + error.message + ')';
 			}
 
 			return debug;

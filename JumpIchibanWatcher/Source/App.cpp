@@ -126,7 +126,17 @@ void App::refreshProduct()
 	
 	auto fetchedContent = m_NetworkManager.fetchData(targetUrl);
 	if (!fetchedContent) {
-		qCritical() << "Fetching error:" << fetchedContent.error();
+		const auto& error = fetchedContent.error();
+		
+		// TODO (when a window will be introduced)
+		qCritical() << error;
+		if (error.code == NetworkErrorCode::NotFound) {
+			// Product not found
+		}
+		else if (error.isRetryable()) {
+			// Retry
+		}
+		
 		return;
 	}
 

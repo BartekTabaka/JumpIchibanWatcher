@@ -26,12 +26,14 @@ struct SettingsError {
 	SettingsErrorCode code;
 	QString message;
 
-	friend QDebug operator<<(QDebug debug, SettingsError error)
+	friend QDebug operator<<(QDebug debug, const SettingsError& error)
 	{
+		QDebugStateSaver saver(debug);
+
 		// Operation
 		switch (error.operation) {
-			case SettingsOperation::Loading: debug << "Settings loading operation error:"; break;
-			case SettingsOperation::Saving:  debug << "Settings saving operation error:"; break;
+			case SettingsOperation::Loading: debug.noquote() << "Settings loading operation error:"; break;
+			case SettingsOperation::Saving:  debug.noquote() << "Settings saving operation error:"; break;
 		}
 		
 		// Error code
@@ -48,8 +50,7 @@ struct SettingsError {
 
 		// Message
 		if (!error.message.isEmpty()) {
-			QDebugStateSaver saver(debug);
-			debug.noquote() << '(' + error.message + ')';
+			debug << '(' + error.message + ')';
 		}
 
 		return debug;
