@@ -70,3 +70,6 @@ Testing/
 
 # config
 /JumpIchibanWatcher/config.ini
+
+# images
+/JumpIchibanWatcher/images/

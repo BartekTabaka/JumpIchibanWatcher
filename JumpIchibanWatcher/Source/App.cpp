@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QList>
 #include <QString>
+#include <QtTypes>
 #include <QUrl>
 #include <utility>
 #include "Core/Product.h"
@@ -55,6 +56,8 @@ namespace
 
 		return std::move(*result);
 	}
+
+	const QString kFeaturedImageFileName = "image_featured.png";
 } // namespace
 
 App *g_App = nullptr;
@@ -87,13 +90,49 @@ void App::downloadImages()
 
 	const Core::Product& product = m_NewProduct.value();
 
-	saveImage(product.featuredImageUrl(), QDir::currentPath() + "/image_featured.png");
+	saveImage(product.featuredImageUrl(), QDir(m_ImageDirName).filePath(kFeaturedImageFileName));
 
 	int imageIndex = 0;
 	for (const auto& url : product.imageUrls()) {
-		QString path = QDir::currentPath() + QString("/image_%1.png").arg(++imageIndex);
+		const QString path = QDir(m_ImageDirName).filePath(QString("image_%1.png").arg(++imageIndex));
 		saveImage(url, path);
 	}
+}
+
+bool App::areProductImagesSaved()
+{
+	if (!m_LastProduct) return false;
+	const Core::Product& lastProduct = m_LastProduct.value();
+
+	// Check if "images" directory exist
+	const QDir workingDir;
+	if (!workingDir.exists(m_ImageDirName)) {
+		qDebug() << "Images directory not found!";
+		return false;
+	}
+
+	const QDir imageDir(m_ImageDirName);
+
+	// Check if the featured image exists
+	const QString featuredImageFilePath = imageDir.filePath(kFeaturedImageFileName);
+	if (!QFile::exists(featuredImageFilePath)) {
+		qDebug() << "Featured image file not found!";
+		return false;
+	}
+
+	// Check if other images exist
+	const QList<QUrl>& imageList = lastProduct.imageUrls();
+	for (qsizetype i = 0; i < imageList.size(); ++i) {
+		const int imageIndex = i + 1;
+		const QString imageFilePath = imageDir.filePath(QString("image_%1.png").arg(imageIndex));
+
+		if (!QFile::exists(imageFilePath)) {
+			qDebug() << QString("Image file not found! (%1)").arg(imageIndex);
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void App::executeWorkflow()
@@ -105,6 +144,9 @@ void App::executeWorkflow()
 
 	refreshProduct();
 	compareProducts();
+
+	if (!areProductImagesSaved())
+		downloadImages();
 
 	commitNewProduct();
 }
@@ -286,14 +328,19 @@ void App::compareProducts()
 	if (newProduct.url() != lastProduct.url()) qWarning() << "Product's URL has changed";
 
 	// Image URLs
-	if (newProduct.featuredImageUrl() != lastProduct.featuredImageUrl()) \
+	if (newProduct.featuredImageUrl() != lastProduct.featuredImageUrl()) {
+		qDebug() << "Featured image URL is different";
 		downloadImages();
+	}
 
 	const QList<QUrl>& oldList = lastProduct.imageUrls();
 	const QList<QUrl>& newList = newProduct.imageUrls();
 	for (qsizetype i = 0; i < oldList.size() && i < newList.size(); ++i) {
-		if (newList[i] != oldList[i])
+		if (newList[i] != oldList[i]) {
+			qDebug() << QString("Image URL is different (%1)").arg(i + 1);
 			downloadImages();
+			break;
+		}
 	}
 
 	qDebug() << "-----------------------";
@@ -307,6 +354,15 @@ bool App::saveImage(const QUrl& url, const QString& path)
 	if (!fetchingResult) {
 		qCritical() << "Fetching error:" << fetchingResult.error();
 		return false;
+	}
+
+	QDir workingDir;
+	if (!workingDir.exists(m_ImageDirName)) {
+		if (!workingDir.mkpath(m_ImageDirName)) {
+			qDebug() << "Couldn't create images directory!";
+			return false;
+		}
+		else qDebug() << "Created images directory";
 	}
 
 	QFile file(path);

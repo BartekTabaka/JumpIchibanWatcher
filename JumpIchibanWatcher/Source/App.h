@@ -29,6 +29,7 @@ private:
 	void refreshProduct();
 	void showProductInfo();
 	void downloadImages();
+	bool areProductImagesSaved();
 
 	// void for now, comparing results will be shown
 	// in console, might become a different type when
@@ -47,4 +48,6 @@ private:
 
 	NetworkManager m_NetworkManager;
 	QTimer m_Timer;
+
+	const QString m_ImageDirName = "images";
 };
