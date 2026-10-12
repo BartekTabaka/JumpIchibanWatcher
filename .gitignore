@@ -68,8 +68,5 @@ vcpkg_installed/
 Testing/
 .cache/
 
-# Personalized scripts
-/BuildDaProject.bat
-
 # config
 /JumpIchibanWatcher/config.ini

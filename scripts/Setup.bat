@@ -1,29 +1,23 @@
 @echo off
 setlocal
 
-:: Go to project root (parent directory of scripts)
 cd /d "%~dp0.."
 
 set "buildDir=build"
-
-if exist "%buildDir%" (
-    echo Deleted previous build folder
-    rmdir /s /q "%buildDir%"
-)
+set "qtDir=C:\Qt\6.12.0\msvc2022_64"
 
 echo.
 echo ========================
-echo Building project...
+echo Generating solution...
 echo ========================
-:: Uses VS 2022 and Qt 6.11 located in C:/ by default.
-:: Change parameters to use a different Visual Studio/Qt version.
-cmake -B "%buildDir%" -S . -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:\Qt\6.12.0\msvc2022_64" || exit /b
+
+cmake -B "%buildDir%" -S . -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="%qtDir%"
+
+if errorlevel 1 exit /b 1
 
 echo.
-echo ========================
-echo Compiling project...
-echo ========================
-cmake --build "%buildDir%" || exit /b
+echo Solution generated successfully!
+echo Location: %buildDir%
 echo.
 
 pause
