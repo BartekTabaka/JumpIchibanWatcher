@@ -1,7 +1,11 @@
 ﻿#include "App.h"
+#include <QApplication>
+
+#include "Core/Product.h"
+#include "Core/Mapper.h"
+#include "Settings.h"
 
 #include <optional>
-#include <QApplication>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -10,8 +14,6 @@
 #include <QtTypes>
 #include <QUrl>
 #include <utility>
-#include "Core/Product.h"
-#include "Settings.h"
 
 namespace
 {
@@ -57,7 +59,7 @@ namespace
 		return std::move(*result);
 	}
 
-	const QString kFeaturedImageFileName = "image_featured.png";
+	const QString kFeaturedImageFileName = QStringLiteral("image_featured.png");
 } // namespace
 
 App *g_App = nullptr;
@@ -94,7 +96,7 @@ void App::downloadImages()
 
 	int imageIndex = 0;
 	for (const auto& url : product.imageUrls()) {
-		const QString path = QDir(m_ImageDirName).filePath(QString("image_%1.png").arg(++imageIndex));
+		const QString path = QDir(m_ImageDirName).filePath(QStringLiteral("image_%1.png").arg(++imageIndex));
 		saveImage(url, path);
 	}
 }
@@ -124,10 +126,10 @@ bool App::areProductImagesSaved()
 	const QList<QUrl>& imageList = lastProduct.imageUrls();
 	for (qsizetype i = 0; i < imageList.size(); ++i) {
 		const int imageIndex = i + 1;
-		const QString imageFilePath = imageDir.filePath(QString("image_%1.png").arg(imageIndex));
+		const QString imageFilePath = imageDir.filePath(QStringLiteral("image_%1.png").arg(imageIndex));
 
 		if (!QFile::exists(imageFilePath)) {
-			qDebug() << QString("Image file not found! (%1)").arg(imageIndex);
+			qDebug() << QStringLiteral("Image file not found! (%1)").arg(imageIndex);
 			return false;
 		}
 	}
@@ -337,7 +339,7 @@ void App::compareProducts()
 	const QList<QUrl>& newList = newProduct.imageUrls();
 	for (qsizetype i = 0; i < oldList.size() && i < newList.size(); ++i) {
 		if (newList[i] != oldList[i]) {
-			qDebug() << QString("Image URL is different (%1)").arg(i + 1);
+			qDebug() << QStringLiteral("Image URL is different (%1)").arg(i + 1);
 			downloadImages();
 			break;
 		}
@@ -367,7 +369,7 @@ bool App::saveImage(const QUrl& url, const QString& path)
 
 	QFile file(path);
 	if (!file.open(QIODevice::WriteOnly)) {
-		qDebug() << QString("Couldn't open image file (%1):").arg(path) << file.errorString();
+		qDebug() << QStringLiteral("Couldn't open image file (%1):").arg(path) << file.errorString();
 		return false;
 	}
 

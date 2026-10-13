@@ -1,18 +1,20 @@
 #pragma once
-#include <QApplication>
+
+#include "Core/Product.h"
+#include "MainWindow.h"
+#include "NetworkManager.h"
 
 #include <optional>
 #include <QObject>
 #include <QString>
 #include <QTimer>
-#include <QUrl>
-#include "Core/Mapper.h"
-#include "Core/Product.h"
-#include "NetworkManager.h"
 
 // -- Forward -----------------
 class App;
 extern App *g_App;
+
+class QApplication;
+class QUrl;
 
 // -- App class ---------------
 class App : public QObject {

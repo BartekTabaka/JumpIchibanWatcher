@@ -32,7 +32,7 @@ namespace
     {
         QString message;
         if (url.isEmpty()) message = "specified URL is empty!";
-        else               message = QString("specified URL is invalid! Error: %1").arg(url.errorString());
+        else               message = QStringLiteral("specified URL is invalid! Error: %1").arg(url.errorString());
 
         return message;
     }
@@ -63,7 +63,7 @@ namespace Core
             if (!rootObj.contains(key))
                 return std::unexpected(JsonError{ 
                     JsonErrorCode::KeyNotFound, 
-                    QString("'%1' key not found!").arg(key) 
+                    QStringLiteral("'%1' key not found!").arg(key)
                 });
 
             // Check values types
@@ -71,7 +71,7 @@ namespace Core
             if (value.type() != field.expectedType)
                 return std::unexpected(JsonError{ 
                     JsonErrorCode::InvalidValueType,
-                    QString("'%1' key value has invalid type!").arg(key)
+                    QStringLiteral("'%1' key value has invalid type!").arg(key)
                 });
         }
         // compare_at_price is optional in terms of type (double or null),
