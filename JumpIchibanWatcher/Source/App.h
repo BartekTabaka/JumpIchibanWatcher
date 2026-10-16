@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Core/Product.h"
-#include "MainWindow.h"
 #include "NetworkManager.h"
 
 #include <optional>
