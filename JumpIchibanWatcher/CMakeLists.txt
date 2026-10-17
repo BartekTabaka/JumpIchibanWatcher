@@ -3,11 +3,7 @@
 #
 
 # Files
-set(ASSET_FILES
-
-)
-
-set(SOURCES
+set(APP_SOURCES
     Source/Main.cpp
 
     Source/App.h
@@ -17,19 +13,19 @@ set(SOURCES
     Source/NetworkManager.cpp
     Source/Settings.h
     Source/Settings.cpp
-
-    ${ASSET_FILES}
 )
-qt_add_executable(JumpIchibanWatcher)
-target_sources(JumpIchibanWatcher PRIVATE ${SOURCES})
 
+# Add executable (.exe)
+qt_add_executable(JumpIchibanWatcher)
+
+# Set sources
+target_sources(JumpIchibanWatcher PRIVATE ${APP_SOURCES})
 target_include_directories(JumpIchibanWatcher PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source)
 
-# Libraries
+# Link libraries
 target_link_libraries(JumpIchibanWatcher PRIVATE
-    Qt6::Widgets
     Qt6::Network
-    Core
+    Ui
 )
 
 # Windows-only stuff
@@ -39,15 +35,7 @@ if (WIN32)
     )
 endif()
 
-# Compilation options
-target_compile_options(JumpIchibanWatcher PRIVATE
-    /W4
-    /utf-8
-)
-
-# Working dir
+# Working directory
 set_target_properties(JumpIchibanWatcher PROPERTIES 
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/JumpIchibanWatcher"
 )
-
-source_group("Assets" FILES ${ASSET_FILES})
